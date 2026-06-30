@@ -19,14 +19,26 @@ HOW TO START
 THAT'S IT. No installation, nothing to download, nothing else needed.
 
 
-WHAT THE THREE PAGES DO
+WHAT THE FOUR PAGES DO
 --------------------------
 - Rechnungstool.html  -> create and edit an invoice
 - Kunden.html         -> add, edit, delete customers
 - Artikel.html        -> add services/items you can insert into invoices
+- Firma.html          -> your company details (name, address, bank
+                          details, invoice number format) — set this
+                          up once, it's then used automatically on
+                          every invoice
 
 You can switch between the pages anytime using the buttons in the
 top-right corner.
+
+
+TYPING AN ITEM TITLE SHOWS SUGGESTIONS
+------------------------------------------
+When you start typing into the "Beschreibung" (title) field of a line
+item, a small dropdown automatically shows matching items from your
+catalog (the ones you saved in Artikel.html). Click a suggestion to
+fill in the title, description and price in one go.
 
 
 HOW TO SAVE AN INVOICE

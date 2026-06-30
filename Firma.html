@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Firmendaten</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body class="page-admin">
+
+<div class="admin-shell">
+
+  <div class="admin-header">
+    <h1>Firmendaten</h1>
+    <div class="admin-nav">
+      <a class="nav-btn" href="Rechnungstool.html">← Zur Rechnung</a>
+      <a class="nav-btn" href="Kunden.html">Kunden</a>
+      <a class="nav-btn" href="Artikel.html">Artikel</a>
+    </div>
+  </div>
+
+  <div class="admin-card">
+    <h2>Deine Firma</h2>
+    <p class="hint-text" style="margin-bottom:16px;">
+      Diese Angaben werden zentral in <code>data/einstellungen.json</code> gespeichert
+      und automatisch auf jeder neuen Rechnung verwendet (Kopfbereich, Footer,
+      Grußformel und Hinweistexte).
+    </p>
+    <form id="firmaForm" onsubmit="return false;">
+      <div class="form-grid">
+        <div class="form-field full">
+          <label>Firmenname</label>
+          <input type="text" id="firmaNameFeld" required placeholder="Meine Firma">
+        </div>
+        <div class="form-field">
+          <label>Straße &amp; Hausnummer</label>
+          <input type="text" id="firmaStrasseFeld" placeholder="Musterweg 1">
+        </div>
+        <div class="form-field">
+          <label>PLZ</label>
+          <input type="text" id="firmaPlzFeld" placeholder="00000">
+        </div>
+        <div class="form-field">
+          <label>Ort</label>
+          <input type="text" id="firmaOrtFeld" placeholder="Musterstadt">
+        </div>
+        <div class="form-field">
+          <label>Inhaber/in</label>
+          <input type="text" id="firmaInhaberFeld" placeholder="Vorname Nachname">
+        </div>
+        <div class="form-field">
+          <label>Telefon</label>
+          <input type="text" id="firmaTelefonFeld" placeholder="0000 0000000">
+        </div>
+        <div class="form-field">
+          <label>E-Mail</label>
+          <input type="email" id="firmaEmailFeld" placeholder="info@meine-firma.de">
+        </div>
+        <div class="form-field">
+          <label>Steuernummer</label>
+          <input type="text" id="firmaSteuernummerFeld" placeholder="00/000/00000">
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <div class="admin-card">
+    <h2>Bankverbindung</h2>
+    <form id="bankForm" onsubmit="return false;">
+      <div class="form-grid">
+        <div class="form-field">
+          <label>Bank</label>
+          <input type="text" id="bankNameFeld" placeholder="Musterbank">
+        </div>
+        <div class="form-field">
+          <label>BIC</label>
+          <input type="text" id="bicFeld" placeholder="MUSTDEFFXXX">
+        </div>
+        <div class="form-field full">
+          <label>IBAN</label>
+          <input type="text" id="ibanFeld" placeholder="DE00 0000 0000 0000 0000 00">
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <div class="admin-card">
+    <h2>Rechnungstexte &amp; Standardwerte</h2>
+    <form id="textForm" onsubmit="return false;">
+      <div class="form-grid">
+        <div class="form-field full">
+          <label>Hinweis zur Umsatzsteuer (z.B. Kleinunternehmerregelung)</label>
+          <textarea id="ustHinweisFeld" placeholder="Gemäß § 19 UStG wird aufgrund der Kleinunternehmerregelung keine Umsatzsteuer erhoben."></textarea>
+        </div>
+        <div class="form-field full">
+          <label>Zahlungshinweis</label>
+          <textarea id="zahlungshinweisFeld" placeholder="Bitte überweisen Sie den Rechnungsbetrag innerhalb der nächsten 14 Tage auf das unten genannte Konto."></textarea>
+        </div>
+        <div class="form-field">
+          <label>Grußformel</label>
+          <input type="text" id="grussFeld" placeholder="Mit freundlichen Grüßen">
+        </div>
+        <div class="form-field">
+          <label>Standard-Rabatt (%)</label>
+          <input type="number" id="rabattFeld" min="0" max="100" step="0.5" placeholder="0">
+        </div>
+        <div class="form-field">
+          <label>Rechnungsnummer-Präfix</label>
+          <input type="text" id="praefixFeld" placeholder="R-">
+        </div>
+        <div class="form-field">
+          <label>Stellen der laufenden Nummer</label>
+          <input type="number" id="stellenFeld" min="1" max="10" step="1" placeholder="4">
+        </div>
+        <div class="form-field full">
+          <div class="hint-text">
+            Nächste Rechnungsnummer wäre aktuell: <strong id="naechsteNummerAnzeige">…</strong>
+            — der Zähler selbst wird automatisch beim Speichern einer Rechnung hochgezählt
+            und lässt sich hier nicht direkt ändern.
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <div class="form-actions" style="margin-top: -6px;">
+    <button type="button" class="btn btn-primary" onclick="firmaSpeichern()">Alles speichern</button>
+  </div>
+
+</div>
+
+<div class="toast" id="globalToast"></div>
+
+<script src="js/filestore.js"></script>
+<script src="js/common.js"></script>
+<script src="js/firma.js"></script>
+</body>
+</html>

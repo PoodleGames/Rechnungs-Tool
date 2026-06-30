@@ -45,89 +45,114 @@ html, body {
   position: relative;
 }
 
-/* ════ TOP BAR (Firmenname + "Rechnung") ════ */
-.inv-topbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  padding: 40px 48px 0;
+/* ════ KOPFBEREICH: links Kunde, rechts nur Firma ════ */
+.inv-head {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  padding: 30px 48px 0;
   flex-shrink: 0;
 }
+
+/* -- Links: Absenderzeile + Kundenadresse (DIN-Adressfenster-Stil) -- */
+.inv-head-left { padding-top: 4px; }
+.inv-sender-line {
+  font-size: 7pt;
+  color: #888;
+  text-decoration: underline;
+  margin-bottom: 12px;
+  outline: none;
+}
+#kundenPickerBar { padding-top: 0; margin-bottom: 8px; }
+.inv-recipient {
+  font-size: 9.5pt;
+  line-height: 1.6;
+  color: #222;
+  min-height: 64px;
+  outline: none;
+  white-space: pre-line;
+}
+
+/* -- Rechts: nur Firma -- */
+.inv-head-right { text-align: right; }
 .inv-company-name {
-  font-size: 22pt;
+  font-size: 11pt;
   font-weight: 700;
   color: #1a2a3a;
   outline: none;
-}
-.inv-doctitle {
-  font-size: 19pt;
-  font-weight: 600;
-  color: #444;
-  margin-top: 70px;
-}
-
-/* ════ Absender-/Empfänger-Block ════ */
-.inv-meta-block {
-  padding: 22px 48px 0;
-  flex-shrink: 0;
-}
-.inv-sender-line {
-  font-size: 7.6pt;
-  color: #444;
-  font-weight: 700;
-  border-bottom: 1px solid #ddd;
-  padding-bottom: 10px;
-  margin-bottom: 14px;
-  display: flex;
-  gap: 6px;
-}
-.inv-sender-line .sep { color: #aaa; font-weight: 400; }
-
-.inv-recipient { font-size: 9pt; line-height: 1.55; color: #222; min-height: 64px; }
-
-/* ════ Betreff/Rechnungsnummer Tabelle ════ */
-.inv-infogrid {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 6px 14px;
-  padding: 22px 48px 0;
-  flex-shrink: 0;
-}
-.inv-infogrid .col-betreff { grid-column: span 1; }
-.inv-infogrid label {
-  display: block;
-  font-size: 7.6pt;
-  font-weight: 700;
-  color: #1a2a3a;
   margin-bottom: 3px;
 }
-.inv-infogrid .field-value {
-  font-size: 8.6pt;
-  color: #222;
+.inv-company-address, .inv-company-contact {
+  font-size: 8.4pt;
+  color: #444;
+  line-height: 1.55;
+  outline: none;
 }
-.inv-infogrid input {
-  font-size: 8.6pt;
-  color: #222;
-  border: none;
-  border-bottom: 1px dashed transparent;
-  width: 100%;
-  font-family: inherit;
-  background: transparent;
-  padding: 1px 0;
+.inv-company-contact { color: #1a4f82; margin-top: 6px; }
+
+/* -- Rechnungsinfo-Block (Nr./Datum/Kundennr./Leistungszeitraum) -- */
+.inv-rechnungsinfo { display: inline-block; text-align: right; }
+.rn-row { font-size: 8.6pt; color: #222; line-height: 1.7; white-space: nowrap; }
+.rn-lbl { font-weight: 700; color: #1a2a3a; margin-right: 4px; }
+.inv-rechnungsinfo input {
+  font-size: 8.6pt; color: #222; border: none; border-bottom: 1px dashed transparent;
+  font-family: inherit; background: transparent; padding: 1px 0; text-align: right; width: 110px;
 }
 @media screen {
-  .inv-infogrid input:hover,
-  .inv-infogrid input:focus { border-bottom-color: #1a4f82; background: rgba(26,79,130,0.04); }
+  .inv-rechnungsinfo input:hover, .inv-rechnungsinfo input:focus {
+    border-bottom-color: #1a4f82; background: rgba(26,79,130,0.04);
+  }
 }
-.inv-infogrid input[readonly] { color: #888; cursor: default; }
+.inv-rechnungsinfo input[readonly] { color: #888; cursor: default; }
 @media screen {
-  .inv-infogrid input[readonly]:hover, .inv-infogrid input[readonly]:focus {
+  .inv-rechnungsinfo input[readonly]:hover, .inv-rechnungsinfo input[readonly]:focus {
     background: transparent; border-bottom-color: transparent;
   }
 }
 
+/* ════ TITELLEISTE: "Rechnung" + Betreff (links), Rechnungsinfo (rechts) ════ */
+.inv-titlebar {
+  margin: 20px 48px 0;
+  padding-bottom: 8px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  border-bottom: 1.5px solid #1a2a3a;
+}
+.inv-doctitle-block { padding-top: 4px; }
+.inv-doctitle {
+  font-size: 17pt;
+  font-weight: 700;
+  color: #1a2a3a;
+  letter-spacing: 0.01em;
+  margin-bottom: 6px;
+}
+.inv-betreff-row { font-size: 8.6pt; color: #444; }
+.inv-betreff-row .rn-lbl { color: #444; }
+.inv-betreff-row input {
+  font-size: 8.6pt; color: #222; border: none; border-bottom: 1px dashed transparent;
+  font-family: inherit; background: transparent; padding: 1px 0; width: 140px;
+}
+@media screen {
+  .inv-betreff-row input:hover, .inv-betreff-row input:focus {
+    border-bottom-color: #1a4f82; background: rgba(26,79,130,0.04);
+  }
+}
+
+/* ════ ANREDE ════ */
+.inv-anrede {
+  padding: 12px 48px 0;
+  flex-shrink: 0;
+  font-size: 9pt;
+  color: #222;
+  line-height: 1.5;
+  white-space: pre-line;
+  outline: none;
+}
+
 /* ════ POSITIONS-TABELLE ════ */
-.inv-items-wrap { padding: 20px 48px 0; flex: 1 1 auto; min-height: 0; overflow: hidden; }
+.inv-items-wrap { padding: 14px 48px 0; flex: 1 1 auto; min-height: 0; overflow: hidden; }
 .inv-items-table { width: 100%; border-collapse: collapse; }
 .inv-items-table thead th {
   font-size: 7.6pt;
@@ -167,17 +192,37 @@ html, body {
 }
 .item-row { position: relative; }
 .item-row-actions {
-  position: absolute; right: -34px; top: 6px;
-  display: flex; flex-direction: column; gap: 2px;
-  opacity: 0; pointer-events: none; transition: opacity .15s;
+  display: flex; flex-direction: column; gap: 3px;
+  align-items: flex-start;
+  opacity: 0; transition: opacity .15s;
 }
-.item-row:hover .item-row-actions { opacity: 1; pointer-events: auto; }
+.item-row:hover .item-row-actions,
+.item-row:focus-within .item-row-actions { opacity: 1; }
 .row-btn {
   background: #fff; border: 1px solid #aac0d8; border-radius: 4px;
-  width: 20px; height: 18px; font-size: 9pt; line-height: 1; color: #1a4f82;
+  width: 22px; height: 20px; font-size: 10pt; line-height: 1; color: #1a4f82;
   cursor: pointer; font-family: inherit;
 }
+.row-btn:hover { background: #eef3f9; }
 .row-btn.minus { color: #c83220; border-color: #f0b8b0; }
+.row-btn.minus:hover { background: #fff0ee; }
+.item-actions-cell { width: 26px; padding-left: 6px !important; vertical-align: top; }
+
+/* Autocomplete-Vorschlagsliste für Positions-Titel */
+.th-hint { font-weight: 400; text-transform: none; letter-spacing: normal; color: #999; font-size: 7pt; }
+.autocomplete-wrap { position: relative; }
+.autocomplete-list {
+  display: none; position: absolute; top: 100%; left: 0; right: 0; z-index: 50;
+  background: #fff; border: 1px solid #cdd8e3; border-radius: 6px; margin-top: 2px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.15); max-height: 180px; overflow-y: auto;
+}
+.autocomplete-list.open { display: block; }
+.autocomplete-item { padding: 7px 10px; cursor: pointer; font-size: 8.4pt; color: #222; border-bottom: 1px solid #f0f2f5; }
+.autocomplete-item:last-child { border-bottom: none; }
+.autocomplete-item:hover, .autocomplete-item.active { background: #eef3f9; }
+.autocomplete-item .ac-title { font-weight: 600; color: #1a2a3a; }
+.autocomplete-item .ac-price { float: right; color: #1a4f82; font-weight: 600; }
+.autocomplete-item .ac-desc { display: block; color: #888; font-size: 7.4pt; margin-top: 1px; }
 
 /* ════ ARTIKEL-PICKER ════ */
 .add-item-bar { padding: 10px 0 0; display: flex; gap: 8px; align-items: center; }
@@ -337,5 +382,15 @@ body.page-admin {
 .connect-box h2 { font-size: 14pt; color: #1a2a3a; margin-bottom: 14px; }
 .connect-box p { font-size: 9.5pt; color: #555; line-height: 1.6; margin-bottom: 10px; }
 .connect-hint { font-size: 8.2pt !important; color: #999 !important; }
+.connect-warning {
+  font-size: 8.6pt !important;
+  color: #92400e !important;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-radius: 6px;
+  padding: 8px 10px;
+  text-align: left;
+  line-height: 1.5 !important;
+}
 .connect-btn { margin-top: 10px; font-size: 10.5pt; padding: 11px 26px; }
 .connect-error { color: #c83220; font-size: 8.5pt; margin-top: 10px; }

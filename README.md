@@ -50,6 +50,7 @@ rechnungstool/
 ├── Rechnungstool.html         main page: create/edit an invoice
 ├── Kunden.html                 customer management
 ├── Artikel.html                 item/catalog management
+├── Firma.html                    company details (used on every invoice)
 │
 ├── css/
 │   └── style.css                shared stylesheet (A4 layout, forms)
@@ -59,7 +60,8 @@ rechnungstool/
 │   ├── common.js                  connection overlay + shared helpers
 │   ├── invoice.js                  logic for the invoice page
 │   ├── kunden.js                    logic for customer management
-│   └── artikel.js                    logic for item/catalog management
+│   ├── artikel.js                    logic for item/catalog management
+│   └── firma.js                       logic for the company details page
 │
 ├── data/                      ── the actual JSON databases ──
 │   ├── kunden.json               customer records + customer number counter

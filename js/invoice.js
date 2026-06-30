@@ -30,11 +30,10 @@ async function init() {
   document.getElementById('feldDatum').value = heutigesDatumISO();
 
   try {
-    const [artikelDaten, kundenDaten, settingsDaten, nummerVorschau] = await Promise.all([
+    const [artikelDaten, kundenDaten, settingsDaten] = await Promise.all([
       fileStore.leseJSON('artikel.json', STANDARD_ARTIKEL),
       fileStore.leseJSON('kunden.json', STANDARD_KUNDEN),
       fileStore.leseJSON('einstellungen.json', STANDARD_EINSTELLUNGEN),
-      fileStore.leseRechnungsnummerVorschau(),
     ]);
 
     katalog = artikelDaten.artikel || [];
@@ -44,6 +43,13 @@ async function init() {
     befuelleArtikelDropdown();
     befuelleKundenDropdown();
     wendeEinstellungenAn();
+
+    // Rechnungsnummer-Vorschau direkt aus den bereits geladenen Einstellungen
+    // berechnen, statt die Datei ein zweites Mal separat zu lesen — das
+    // vermeidet zwei gleichzeitige Lesezugriffe auf dieselbe Datei beim
+    // Seitenstart.
+    const rn = einstellungen.rechnungsnummer || { praefix: 'R-', stellen: 4, naechste_laufnummer: 1 };
+    const nummerVorschau = rn.praefix + String(rn.naechste_laufnummer).padStart(rn.stellen, '0');
     document.getElementById('feldRechnungsnummer').value = nummerVorschau + ' (Entwurf)';
 
     if (katalog.length > 0) {
@@ -63,6 +69,16 @@ async function init() {
   if (window.ResizeObserver) new ResizeObserver(checkOverflow).observe(document.getElementById('invoicePage'));
 }
 
+/**
+ * Verbindet eine Liste von Textzeilen mit <br>, lässt dabei aber leere
+ * oder reine Whitespace-Zeilen komplett weg. So entstehen keine nackten
+ * Labels ("Tel:") wenn das zugehörige Feld in den Firmeneinstellungen
+ * (noch) nicht ausgefüllt ist.
+ */
+function baueZeilen(zeilen) {
+  return zeilen.filter(z => z && z.trim()).join('<br>');
+}
+
 function wendeEinstellungenAn() {
   const firma = einstellungen.firma || {};
   if (firma.name) {
@@ -70,17 +86,32 @@ function wendeEinstellungenAn() {
     document.getElementById('footerAbsenderTitel').textContent = firma.name;
     document.getElementById('grussName').textContent = firma.name;
   }
-  document.getElementById('senderZeile').textContent =
-    `${firma.name || ''} | ${firma.strasse || ''} | ${firma.plz || ''} ${firma.ort || ''}`;
 
-  document.getElementById('footerAbsenderAdresse').innerHTML =
-    `${firma.strasse || ''}<br>${firma.plz || ''} ${firma.ort || ''}<br>Steuernummer: ${firma.steuernummer || ''}<br>Inhaber: ${firma.inhaber || ''}`;
+  document.getElementById('firmaAdresse').innerHTML = baueZeilen([
+    firma.strasse,
+    [firma.plz, firma.ort].filter(Boolean).join(' '),
+  ]);
 
-  document.getElementById('footerKontaktInhalt').innerHTML =
-    `Telefon: ${firma.telefon || ''}<br>E-Mail: ${firma.email || ''}`;
+  document.getElementById('firmaKontakt').innerHTML = baueZeilen([
+    firma.telefon ? `Tel: ${firma.telefon}` : '',
+    firma.email,
+  ]);
 
-  document.getElementById('footerBankInhalt').innerHTML =
-    `Bank: ${firma.bank_name || ''}<br>IBAN: ${firma.iban || ''}<br>BIC: ${firma.bic || ''}`;
+  document.getElementById('footerAbsenderAdresse').innerHTML = baueZeilen([
+    firma.steuernummer ? `Steuernummer: ${firma.steuernummer}` : '',
+    firma.inhaber ? `Inhaber: ${firma.inhaber}` : '',
+  ]);
+
+  document.getElementById('footerKontaktInhalt').innerHTML = baueZeilen([
+    firma.telefon ? `Telefon: ${firma.telefon}` : '',
+    firma.email ? `E-Mail: ${firma.email}` : '',
+  ]);
+
+  document.getElementById('footerBankInhalt').innerHTML = baueZeilen([
+    firma.bank_name ? `Bank: ${firma.bank_name}` : '',
+    firma.iban ? `IBAN: ${firma.iban}` : '',
+    firma.bic ? `BIC: ${firma.bic}` : '',
+  ]);
 
   if (firma.kleinunternehmer_hinweis) document.getElementById('hinweisUst').textContent = firma.kleinunternehmer_hinweis;
   if (firma.zahlungshinweis) document.getElementById('hinweisZahlung').textContent = firma.zahlungshinweis;
@@ -173,7 +204,10 @@ function renderPositionen() {
     tr.innerHTML = `
       <td class="item-pos">${idx + 1}.</td>
       <td>
-        <textarea class="item-title-input" rows="1" data-id="${pos._id}" data-field="title" placeholder="Titel">${escapeHtml(pos.title)}</textarea>
+        <div class="autocomplete-wrap">
+          <textarea class="item-title-input" rows="1" data-id="${pos._id}" data-field="title" placeholder="Titel — tippen für Vorschläge" autocomplete="off">${escapeHtml(pos.title)}</textarea>
+          <div class="autocomplete-list" data-list-for="${pos._id}"></div>
+        </div>
         <textarea class="item-desc-input" rows="2" data-id="${pos._id}" data-field="description" placeholder="Beschreibung">${escapeHtml(pos.description)}</textarea>
       </td>
       <td class="num"><input class="item-num-input" type="number" min="0" step="0.01" data-id="${pos._id}" data-field="menge" value="${pos.menge}"></td>
@@ -181,7 +215,7 @@ function renderPositionen() {
       <td class="num"><input class="item-num-input" type="number" min="0" step="1" data-id="${pos._id}" data-field="ust" value="${pos.ust}">%</td>
       <td class="num"><input class="item-num-input" type="text" data-id="${pos._id}" data-field="einzelpreis" value="${formatEuro(pos.einzelpreis)}"></td>
       <td class="num item-gesamt" data-row="${pos._id}">€ ${formatEuro(pos.menge * pos.einzelpreis)}</td>
-      <td class="no-print" style="width:0;padding:0;">
+      <td class="no-print item-actions-cell">
         <div class="item-row-actions">
           <button class="row-btn" type="button" title="Position duplizieren" onclick="duplicatePosition('${pos._id}')">+</button>
           <button class="row-btn minus" type="button" title="Position entfernen" onclick="removePosition('${pos._id}')">−</button>
@@ -196,8 +230,79 @@ function renderPositionen() {
     if (el.tagName === 'TEXTAREA') autoResize(el);
   });
 
+  body.querySelectorAll('.item-title-input').forEach(el => {
+    el.addEventListener('input', onTitleAutocompleteInput);
+    el.addEventListener('focus', onTitleAutocompleteInput);
+    el.addEventListener('blur', () => {
+      // Kurze Verzögerung, damit ein Klick auf einen Vorschlag noch ankommt,
+      // bevor die Liste durch den Fokusverlust geschlossen wird.
+      setTimeout(() => closeAutocomplete(el.dataset.id), 150);
+    });
+  });
+
   berechneSummen();
   checkOverflow();
+}
+
+/* ── ARTIKEL-AUTOFILL BEIM TIPPEN ── */
+function onTitleAutocompleteInput(e) {
+  const input = e.target;
+  const id = input.dataset.id;
+  const query = input.value.trim().toLowerCase();
+  const list = document.querySelector(`.autocomplete-list[data-list-for="${id}"]`);
+  if (!list) return;
+
+  if (!query) {
+    // Beim reinen Fokussieren ohne Text: ganzen Katalog als Vorschlag zeigen
+    renderAutocompleteOptions(list, katalog.slice(0, 8), id);
+    return;
+  }
+
+  const treffer = katalog.filter(a => a.title.toLowerCase().includes(query)).slice(0, 8);
+  if (treffer.length === 0) {
+    closeAutocomplete(id);
+    return;
+  }
+  renderAutocompleteOptions(list, treffer, id);
+}
+
+function renderAutocompleteOptions(list, treffer, id) {
+  list.innerHTML = treffer.map(a => `
+    <div class="autocomplete-item" data-artikel-id="${escapeHtml(a.id)}" data-pos-id="${id}">
+      <span class="ac-price">€ ${formatEuro(a.einzelpreis)}</span>
+      <span class="ac-title">${escapeHtml(a.title)}</span>
+      ${a.description ? `<span class="ac-desc">${escapeHtml(a.description)}</span>` : ''}
+    </div>
+  `).join('');
+  list.classList.add('open');
+
+  list.querySelectorAll('.autocomplete-item').forEach(item => {
+    item.addEventListener('mousedown', (ev) => {
+      ev.preventDefault(); // verhindert, dass das Textarea-blur vor dem Klick feuert
+      const artikelId = item.dataset.artikelId;
+      const posId = item.dataset.posId;
+      uebernehmeArtikelInPosition(posId, artikelId);
+    });
+  });
+}
+
+function closeAutocomplete(id) {
+  const list = document.querySelector(`.autocomplete-list[data-list-for="${id}"]`);
+  if (list) { list.classList.remove('open'); list.innerHTML = ''; }
+}
+
+function uebernehmeArtikelInPosition(posId, artikelId) {
+  const pos = positionen.find(p => p._id === posId);
+  const artikel = katalog.find(a => a.id === artikelId);
+  if (!pos || !artikel) return;
+
+  pos.title = artikel.title;
+  pos.description = artikel.description || '';
+  pos.einzelpreis = artikel.einzelpreis ?? 0;
+  pos.einheit = artikel.einheit || pos.einheit;
+  pos.ust = artikel.ust ?? pos.ust;
+
+  renderPositionen();
 }
 
 function autoResize(el) {
@@ -262,7 +367,7 @@ function checkOverflow() {
 /* ── HTML-EXPORT (lokaler Download) ── */
 function buildExportHTML() {
   const clone = document.documentElement.cloneNode(true);
-  clone.querySelectorAll('.no-print, .action-btns, .overflow-bar, .toast, .connect-overlay').forEach(el => el.remove());
+  clone.querySelectorAll('.no-print, .action-btns, .overflow-bar, .toast, .connect-overlay, .autocomplete-list, #kundenPickerBar').forEach(el => el.remove());
   clone.querySelectorAll('[contenteditable]').forEach(el => el.removeAttribute('contenteditable'));
   clone.querySelectorAll('textarea, input').forEach(el => {
     if (el.tagName === 'TEXTAREA') {

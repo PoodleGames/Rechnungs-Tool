@@ -135,14 +135,24 @@ class FileStore {
 
   /**
    * Öffnet den Auswahldialog, damit der Nutzer den Projektordner (den
-   * Ordner, in dem sich diese HTML-Datei befindet, bzw. dessen Hauptordner)
-   * auswählt. Muss durch eine direkte Nutzerinteraktion (Klick) ausgelöst
-   * werden — das ist eine Sicherheitsvorgabe der Browser, kein Bug.
+   * Ordner, in dem sich diese HTML-Datei befindet) auswählt. Muss durch
+   * eine direkte Nutzerinteraktion (Klick) ausgelöst werden — das ist
+   * eine Sicherheitsvorgabe der Browser, kein Bug.
+   *
+   * WICHTIG: Es gibt keine Möglichkeit, den Dialog automatisch im Ordner
+   * dieser HTML-Datei zu öffnen — file://-Seiten haben aus Sicherheits-
+   * gründen keinen Zugriff auf ihren eigenen Dateisystempfad, und die
+   * File System Access API erlaubt als Startordner nur feste System-
+   * ordner (Desktop, Dokumente, Downloads, …) oder einen bereits zuvor
+   * erteilten Handle. Deshalb wird hier bewusst KEIN startIn gesetzt:
+   * ohne explizite Angabe merkt sich der Browser selbstständig den
+   * zuletzt verwendeten Ordner über mehrere Aufrufe hinweg, was nach
+   * dem ersten korrekten Setup zuverlässiger ist als ein fest codierter
+   * (und in der Praxis meist falscher) Standardordner.
    */
   async waehleProjektordner() {
     this.rootHandle = await window.showDirectoryPicker({
       mode: 'readwrite',
-      startIn: 'documents',
     });
     await speichereHandleDauerhaft(ROOT_HANDLE_KEY, this.rootHandle);
     await this._initUnterordner();

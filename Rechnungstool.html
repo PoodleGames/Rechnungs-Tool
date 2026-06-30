@@ -11,51 +11,52 @@
 <!-- A4 SEITE -->
 <div class="invoice-page" id="invoicePage">
 
-  <!-- TOPBAR: Firmenname + "Rechnung" -->
-  <div class="inv-topbar no-print-edit">
-    <div class="inv-company-name" id="firmaName" contenteditable="true" spellcheck="false">Meine Firma</div>
-    <div class="inv-doctitle">Rechnung</div>
-  </div>
+  <!-- KOPFBEREICH: links Absenderzeile + Kunde, rechts Firma -->
+  <div class="inv-head">
 
-  <!-- ABSENDERZEILE + EMPFÄNGER -->
-  <div class="inv-meta-block">
-    <div class="inv-sender-line">
-      <span id="senderZeile">Meine Firma | Musterweg 1 | 00000 Musterstadt</span>
-    </div>
+    <!-- LINKS: KUNDENADRESSE -->
+    <div class="inv-head-left">
+      <div class="add-item-bar no-print" id="kundenPickerBar">
+        <select id="kundenAuswahl"><option value="">+ Kunde aus Adressbuch wählen…</option></select>
+        <button onclick="uebernehmeKunde()">Übernehmen</button>
+      </div>
 
-    <div class="add-item-bar no-print" style="padding-top:0; margin-bottom:8px;">
-      <select id="kundenAuswahl"><option value="">+ Kunde aus Adressbuch wählen…</option></select>
-      <button onclick="uebernehmeKunde()">Übernehmen</button>
-    </div>
-
-    <div class="inv-recipient" id="empfaengerBlock" contenteditable="true" spellcheck="false">Max Mustermann
+      <div class="inv-recipient" id="empfaengerBlock" contenteditable="true" spellcheck="false">Herrn/Frau
+Max Mustermann
 Musterstraße 1
 12345 Musterstadt</div>
+    </div>
+
+    <!-- RECHTS: NUR FIRMA -->
+    <div class="inv-head-right">
+      <div class="inv-company-name" id="firmaName" contenteditable="true" spellcheck="false">Meine Firma</div>
+      <div class="inv-company-address" id="firmaAdresse" contenteditable="true" spellcheck="false">Musterweg 1<br>00000 Musterstadt</div>
+      <div class="inv-company-contact" id="firmaKontakt" contenteditable="true" spellcheck="false">Tel: 0000 0000000<br>info@meine-firma.de</div>
+    </div>
+
   </div>
 
-  <!-- INFO-GRID: Betreff / Rechnungsnummer / Kundennummer / Leistungszeitraum / Datum -->
-  <div class="inv-infogrid">
-    <div class="form-field-inline">
-      <label>Betreff</label>
-      <input type="text" id="feldBetreff" value="Dienstleistung">
+  <!-- TITEL + RECHNUNGSINFO (Nr./Datum/Kundennr.) -->
+  <div class="inv-titlebar">
+    <div class="inv-doctitle-block">
+      <div class="inv-doctitle">Rechnung</div>
+      <div class="inv-betreff-row">
+        <span class="rn-lbl">Betreff:</span>
+        <input type="text" id="feldBetreff" value="Dienstleistung">
+      </div>
     </div>
-    <div class="form-field-inline">
-      <label>Rechnungsnummer</label>
-      <input type="text" id="feldRechnungsnummer" value="Entwurf" readonly title="Wird beim Speichern automatisch vergeben">
-    </div>
-    <div class="form-field-inline">
-      <label>Kundennummer</label>
-      <input type="text" id="feldKundennummer" value="" placeholder="K-00001">
-    </div>
-    <div class="form-field-inline">
-      <label>Leistungszeitraum</label>
-      <input type="text" id="feldLeistungszeitraum" value="">
-    </div>
-    <div class="form-field-inline">
-      <label>Datum</label>
-      <input type="date" id="feldDatum">
+    <div class="inv-rechnungsinfo">
+      <div class="rn-row"><span class="rn-lbl">Rechnung Nr.:</span> <input type="text" id="feldRechnungsnummer" value="Entwurf" readonly title="Wird beim Speichern automatisch vergeben"></div>
+      <div class="rn-row"><span class="rn-lbl">Datum:</span> <input type="date" id="feldDatum"></div>
+      <div class="rn-row"><span class="rn-lbl">Kunden-Nr.:</span> <input type="text" id="feldKundennummer" value="" placeholder="K-00001"></div>
+      <div class="rn-row"><span class="rn-lbl">Leistungszeitraum:</span> <input type="text" id="feldLeistungszeitraum" value=""></div>
     </div>
   </div>
+
+  <!-- ANREDE -->
+  <div class="inv-anrede" id="anredeBlock" contenteditable="true" spellcheck="false">Sehr geehrte Damen und Herren,
+
+vielen Dank für Ihren Auftrag, den wir wie folgt in Rechnung stellen:</div>
 
   <!-- POSITIONEN -->
   <div class="inv-items-wrap">
@@ -63,7 +64,7 @@ Musterstraße 1
       <thead>
         <tr>
           <th style="width:24px;">Pos.</th>
-          <th>Beschreibung</th>
+          <th>Beschreibung <span class="th-hint no-print">(Titel eintippen zeigt Vorschläge aus dem Katalog)</span></th>
           <th class="num" style="width:55px;">Menge</th>
           <th style="width:50px;">Einheit</th>
           <th class="num" style="width:40px;">USt.</th>
@@ -116,7 +117,7 @@ Musterstraße 1
   <div class="inv-footer">
     <div class="footer-col">
       <div class="footer-col-title" contenteditable="true" id="footerAbsenderTitel">Meine Firma</div>
-      <div contenteditable="true" id="footerAbsenderAdresse">Musterweg 1<br>00000 Musterstadt<br>Steuernummer: 00/000/00000<br>Inhaber: Vorname Nachname</div>
+      <div contenteditable="true" id="footerAbsenderAdresse">Steuernummer: 00/000/00000<br>Inhaber: Vorname Nachname</div>
     </div>
     <div class="footer-col">
       <div class="footer-col-title" contenteditable="true" id="footerKontaktTitel">Kontakt</div>
@@ -140,6 +141,10 @@ Musterstraße 1
 
 <!-- AKTIONSLEISTE -->
 <div class="action-btns no-print">
+  <a class="nav-btn" href="Firma.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V7l8-4v18"/><path d="M19 21V11l-6-4"/><path d="M9 9v.01"/><path d="M9 12v.01"/><path d="M9 15v.01"/><path d="M9 18v.01"/></svg>
+    Firma
+  </a>
   <a class="nav-btn" href="Kunden.html">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
     Kunden

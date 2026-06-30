@@ -56,10 +56,16 @@ function zeigeVerbindenBildschirm(onConnected) {
       <div class="connect-icon">📁</div>
       <h2>Rechnungstool mit deinem Ordner verbinden</h2>
       <p>
-        Damit deine Kunden, Artikel und Rechnungen sicher auf deinem
-        Rechner gespeichert werden, wähle bitte einmalig einen Ordner
-        aus, in dem alles abgelegt werden soll (am einfachsten: den
-        Ordner, der diese Datei enthält).
+        Klicke unten auf <strong>"Ordner auswählen"</strong>. Im sich
+        öffnenden Fenster musst du dann zu dem Ordner navigieren, in dem
+        sich diese Datei (<code>Rechnungstool.html</code>) befindet, und
+        genau diesen Ordner auswählen.
+      </p>
+      <p class="connect-warning">
+        ⚠️ Wichtig: Der Dialog öffnet sich möglicherweise zunächst in
+        einem anderen Ordner (z.B. "Dokumente"). Bitte navigiere darin
+        aktiv zum richtigen Ordner, statt einfach zu bestätigen — sonst
+        werden deine Daten am falschen Ort gespeichert.
       </p>
       <p class="connect-hint">
         Das musst du nur beim ersten Mal machen — danach merkt sich der
