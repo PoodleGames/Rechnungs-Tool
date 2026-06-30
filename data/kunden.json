@@ -1,0 +1,15 @@
+{
+  "kunden": [
+    {
+      "kundennummer": "K-00001",
+      "name": "Thomas Schweder",
+      "strasse": "Juliusplate 4",
+      "plz": "27804",
+      "ort": "Berne",
+      "telefon": "",
+      "email": "",
+      "notiz": ""
+    }
+  ],
+  "naechste_laufnummer": 2
+}

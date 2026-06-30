@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kundenverwaltung</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body class="page-admin">
+
+<div class="admin-shell">
+
+  <div class="admin-header">
+    <h1>Kundenverwaltung</h1>
+    <div class="admin-nav">
+      <a class="nav-btn" href="Rechnungstool.html">← Zur Rechnung</a>
+      <a class="nav-btn" href="Artikel.html">Artikel verwalten</a>
+    </div>
+  </div>
+
+  <!-- FORMULAR: Kunde anlegen / bearbeiten -->
+  <div class="admin-card">
+    <h2 id="formTitel">Neuen Kunden anlegen</h2>
+    <form id="kundeForm" onsubmit="return false;">
+      <input type="hidden" id="kundeKundennummerHidden" value="">
+      <div class="form-grid">
+        <div class="form-field">
+          <label>Name</label>
+          <input type="text" id="kundeName" required placeholder="z.B. Thomas Schweder">
+        </div>
+        <div class="form-field">
+          <label>Kundennummer</label>
+          <input type="text" id="kundeNummer" placeholder="wird automatisch vergeben, falls leer">
+          <div class="hint-text">Leer lassen für automatische Nummer (fortlaufend, z.B. K-00003)</div>
+        </div>
+        <div class="form-field">
+          <label>Straße &amp; Hausnummer</label>
+          <input type="text" id="kundeStrasse" placeholder="Musterstraße 1">
+        </div>
+        <div class="form-field">
+          <label>PLZ</label>
+          <input type="text" id="kundePlz" placeholder="12345">
+        </div>
+        <div class="form-field">
+          <label>Ort</label>
+          <input type="text" id="kundeOrt" placeholder="Musterstadt">
+        </div>
+        <div class="form-field">
+          <label>Telefon</label>
+          <input type="text" id="kundeTelefon" placeholder="optional">
+        </div>
+        <div class="form-field">
+          <label>E-Mail</label>
+          <input type="email" id="kundeEmail" placeholder="optional">
+        </div>
+        <div class="form-field full">
+          <label>Notiz</label>
+          <textarea id="kundeNotiz" placeholder="optional, z.B. interne Hinweise"></textarea>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn btn-secondary" id="btnAbbrechen" onclick="formZuruecksetzen()" style="display:none;">Abbrechen</button>
+        <button type="button" class="btn btn-primary" onclick="kundeSpeichern()">Kunde speichern</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- TABELLE: vorhandene Kunden -->
+  <div class="admin-card">
+    <h2>Vorhandene Kunden</h2>
+    <table class="data-table" id="kundenTabelle">
+      <thead>
+        <tr>
+          <th>Kundennummer</th>
+          <th>Name</th>
+          <th>Adresse</th>
+          <th>Kontakt</th>
+          <th style="width:90px;"></th>
+        </tr>
+      </thead>
+      <tbody id="kundenTabelleBody">
+        <tr><td colspan="5" class="empty-state">Lade Kunden…</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+<div class="toast" id="globalToast"></div>
+
+<script src="js/filestore.js"></script>
+<script src="js/common.js"></script>
+<script src="js/kunden.js"></script>
+</body>
+</html>

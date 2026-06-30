@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rechnung erstellen</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body class="page-rechnung">
+
+<!-- A4 SEITE -->
+<div class="invoice-page" id="invoicePage">
+
+  <!-- TOPBAR: Firmenname + "Rechnung" -->
+  <div class="inv-topbar no-print-edit">
+    <div class="inv-company-name" id="firmaName" contenteditable="true" spellcheck="false">Andre Gefken</div>
+    <div class="inv-doctitle">Rechnung</div>
+  </div>
+
+  <!-- ABSENDERZEILE + EMPFÄNGER -->
+  <div class="inv-meta-block">
+    <div class="inv-sender-line">
+      <span id="senderZeile">Andre Gefken | Königstraße 46 | 27798 Hude</span>
+    </div>
+
+    <div class="add-item-bar no-print" style="padding-top:0; margin-bottom:8px;">
+      <select id="kundenAuswahl"><option value="">+ Kunde aus Adressbuch wählen…</option></select>
+      <button onclick="uebernehmeKunde()">Übernehmen</button>
+    </div>
+
+    <div class="inv-recipient" id="empfaengerBlock" contenteditable="true" spellcheck="false">Thomas Schweder
+Juliusplate 4
+27804 Berne</div>
+  </div>
+
+  <!-- INFO-GRID: Betreff / Rechnungsnummer / Kundennummer / Leistungszeitraum / Datum -->
+  <div class="inv-infogrid">
+    <div class="form-field-inline">
+      <label>Betreff</label>
+      <input type="text" id="feldBetreff" value="Dienstleistung">
+    </div>
+    <div class="form-field-inline">
+      <label>Rechnungsnummer</label>
+      <input type="text" id="feldRechnungsnummer" value="Entwurf" readonly title="Wird beim Speichern automatisch vergeben">
+    </div>
+    <div class="form-field-inline">
+      <label>Kundennummer</label>
+      <input type="text" id="feldKundennummer" value="" placeholder="K-00001">
+    </div>
+    <div class="form-field-inline">
+      <label>Leistungszeitraum</label>
+      <input type="text" id="feldLeistungszeitraum" value="">
+    </div>
+    <div class="form-field-inline">
+      <label>Datum</label>
+      <input type="date" id="feldDatum">
+    </div>
+  </div>
+
+  <!-- POSITIONEN -->
+  <div class="inv-items-wrap">
+    <table class="inv-items-table">
+      <thead>
+        <tr>
+          <th style="width:24px;">Pos.</th>
+          <th>Beschreibung</th>
+          <th class="num" style="width:55px;">Menge</th>
+          <th style="width:50px;">Einheit</th>
+          <th class="num" style="width:40px;">USt.</th>
+          <th class="num" style="width:70px;">Einzelpreis</th>
+          <th class="num" style="width:75px;">Gesamt</th>
+        </tr>
+      </thead>
+      <tbody id="positionsBody">
+        <!-- Positionen werden per JS eingefügt -->
+      </tbody>
+    </table>
+
+    <div class="add-item-bar no-print">
+      <select id="artikelAuswahl"><option value="">+ Artikel aus Katalog wählen…</option></select>
+      <button class="primary" onclick="addPositionFromCatalog()">Hinzufügen</button>
+      <button onclick="addLeerePosition()">Leere Position</button>
+    </div>
+  </div>
+
+  <!-- SUMMEN -->
+  <div class="inv-totals-wrap">
+    <div class="inv-totals">
+      <div class="trow">
+        <span class="lbl">Zwischensumme (Netto)</span>
+        <span class="val" id="sumZwischensumme">€ 0,00</span>
+      </div>
+      <div class="trow rabatt">
+        <span class="lbl">Rabatt (<input type="number" class="rabatt-input-inline no-print-input" id="rabattProzent" value="10" min="0" max="100" step="0.5">%)</span>
+        <span class="val" id="sumRabatt">-€ 0,00</span>
+      </div>
+      <div class="trow gesamt">
+        <span class="lbl">Gesamt</span>
+        <span class="val" id="sumGesamt">€ 0,00</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- HINWEISTEXTE -->
+  <div class="inv-notes">
+    <p contenteditable="true" id="hinweisUst" spellcheck="false">Gemäß § 19 UStG wird aufgrund der Kleinunternehmerregelung keine Umsatzsteuer erhoben.</p>
+    <p contenteditable="true" id="hinweisZahlung" spellcheck="false">Bitte überweisen Sie den Rechnungsbetrag innerhalb der nächsten 14 Tage auf das unten genannte Konto.</p>
+  </div>
+
+  <div class="inv-signoff">
+    <div contenteditable="true" id="grussText" spellcheck="false">Mit freundlichen Grüßen</div>
+    <div contenteditable="true" id="grussName" spellcheck="false">Andre Gefken</div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="inv-footer">
+    <div class="footer-col">
+      <div class="footer-col-title" contenteditable="true" id="footerAbsenderTitel">Andre Gefken</div>
+      <div contenteditable="true" id="footerAbsenderAdresse">Königstraße 46<br>27798 Hude<br>Steuernummer: 57/114/13615<br>Inhaber: Andre Gefken</div>
+    </div>
+    <div class="footer-col">
+      <div class="footer-col-title" contenteditable="true" id="footerKontaktTitel">Kontakt</div>
+      <div contenteditable="true" id="footerKontaktInhalt">Telefon: 017672768605<br>E-Mail: Andre.Gefken@web.de</div>
+    </div>
+    <div class="footer-col right">
+      <div class="footer-col-title" contenteditable="true" id="footerBankTitel">Bankverbindung</div>
+      <div contenteditable="true" id="footerBankInhalt">Bank: C24 Bank<br>IBAN: DE26 5002 4024 2240 9318 36<br>BIC: DEFF DEFF XXX</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- OVERFLOW WARNUNG -->
+<div class="overflow-bar no-print" id="overflowBar">
+  ⚠ Inhalt überläuft die Seite – bitte Text kürzen
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="globalToast"></div>
+
+<!-- AKTIONSLEISTE -->
+<div class="action-btns no-print">
+  <a class="nav-btn" href="Kunden.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    Kunden
+  </a>
+  <a class="nav-btn" href="Artikel.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2Z"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
+    Artikel
+  </a>
+  <button class="save-btn" onclick="saveHTML()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+      <polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>
+    </svg>
+    HTML speichern
+  </button>
+  <button class="save-btn" onclick="speichereImKundenordner()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+    Im Kundenordner ablegen
+  </button>
+  <button class="pdf-btn" onclick="printPDF()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M6 9V2h12v7"/><rect x="2" y="9" width="20" height="9" rx="2"/><path d="M6 18v4h12v-4"/>
+      <circle cx="17.5" cy="13.5" r="1" fill="currentColor" stroke="none"/>
+    </svg>
+    Als PDF exportieren
+  </button>
+</div>
+
+<script src="js/filestore.js"></script>
+<script src="js/common.js"></script>
+<script src="js/invoice.js"></script>
+</body>
+</html>

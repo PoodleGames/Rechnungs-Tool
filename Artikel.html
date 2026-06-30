@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Artikelverwaltung</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body class="page-admin">
+
+<div class="admin-shell">
+
+  <div class="admin-header">
+    <h1>Artikelverwaltung</h1>
+    <div class="admin-nav">
+      <a class="nav-btn" href="Rechnungstool.html">← Zur Rechnung</a>
+      <a class="nav-btn" href="Kunden.html">Kunden verwalten</a>
+    </div>
+  </div>
+
+  <!-- FORMULAR: Artikel anlegen / bearbeiten -->
+  <div class="admin-card">
+    <h2 id="formTitel">Neuen Artikel anlegen</h2>
+    <form id="artikelForm" onsubmit="return false;">
+      <input type="hidden" id="artikelIdHidden" value="">
+      <div class="form-grid">
+        <div class="form-field full">
+          <label>Title</label>
+          <input type="text" id="artikelTitle" required placeholder="z.B. Entfernung der Nester des Eichenprozessionsspinners">
+        </div>
+        <div class="form-field full">
+          <label>Description</label>
+          <textarea id="artikelDescription" placeholder="Ausführliche Beschreibung der Leistung"></textarea>
+        </div>
+        <div class="form-field">
+          <label>Einzelpreis (€)</label>
+          <input type="text" id="artikelPreis" placeholder="z.B. 50,00">
+        </div>
+        <div class="form-field">
+          <label>Einheit</label>
+          <input type="text" id="artikelEinheit" placeholder="z.B. Stück, Stunde, Pauschale" value="Stück">
+        </div>
+        <div class="form-field">
+          <label>USt. (%)</label>
+          <input type="number" id="artikelUst" min="0" max="100" step="0.5" value="0">
+        </div>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn btn-secondary" id="btnAbbrechen" onclick="formZuruecksetzen()" style="display:none;">Abbrechen</button>
+        <button type="button" class="btn btn-primary" onclick="artikelSpeichern()">Artikel speichern</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- TABELLE: vorhandene Artikel -->
+  <div class="admin-card">
+    <h2>Artikelkatalog</h2>
+    <table class="data-table" id="artikelTabelle">
+      <thead>
+        <tr>
+          <th>Title</th>
+          <th>Description</th>
+          <th style="width:90px;">Preis</th>
+          <th style="width:70px;">Einheit</th>
+          <th style="width:90px;"></th>
+        </tr>
+      </thead>
+      <tbody id="artikelTabelleBody">
+        <tr><td colspan="5" class="empty-state">Lade Artikel…</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+<div class="toast" id="globalToast"></div>
+
+<script src="js/filestore.js"></script>
+<script src="js/common.js"></script>
+<script src="js/artikel.js"></script>
+</body>
+</html>

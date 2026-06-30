@@ -1,0 +1,28 @@
+{
+  "firma": {
+    "name": "Andre Gefken",
+    "strasse": "Königstraße 46",
+    "plz": "27798",
+    "ort": "Hude",
+    "telefon": "017672768605",
+    "email": "Andre.Gefken@web.de",
+    "bank_name": "C24 Bank",
+    "iban": "DE26 5002 4024 2240 9318 36",
+    "bic": "DEFF DEFF XXX",
+    "steuernummer": "57/114/13615",
+    "inhaber": "Andre Gefken",
+    "kleinunternehmer_hinweis": "Gemäß § 19 UStG wird aufgrund der Kleinunternehmerregelung keine Umsatzsteuer erhoben.",
+    "zahlungshinweis": "Bitte überweisen Sie den Rechnungsbetrag innerhalb der nächsten 14 Tage auf das unten genannte Konto.",
+    "gruss": "Mit freundlichen Grüßen"
+  },
+  "footer": {
+    "rechtsspalte_titel": "Kontakt",
+    "rechtsspalte2_titel": "Bankverbindung"
+  },
+  "rechnungsnummer": {
+    "praefix": "R-",
+    "stellen": 4,
+    "naechste_laufnummer": 1
+  },
+  "standard_rabatt_prozent": 10
+}

@@ -1,0 +1,20 @@
+{
+  "artikel": [
+    {
+      "id": "art-0001",
+      "title": "Rüsten",
+      "description": "Anfahrt, Vorbereitung, anziehen von Schutzausrüstung, Reinigung der Ausrüstung etc.",
+      "einzelpreis": 95.00,
+      "einheit": "Stück",
+      "ust": 0
+    },
+    {
+      "id": "art-0002",
+      "title": "Entfernung der Nester des Eichenprozessionsspinners",
+      "description": "Entfernung eines Nest des Eichenprozessionsspinners mit Verklebung im Nachhinein",
+      "einzelpreis": 50.00,
+      "einheit": "Stück",
+      "ust": 0
+    }
+  ]
+}

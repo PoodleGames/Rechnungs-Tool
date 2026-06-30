@@ -1,0 +1,11 @@
+# Generierte Rechnungen (enthalten echte Kundendaten — nicht versionieren)
+output/**
+!output/.gitkeep
+
+# Betriebssystem-Dateien
+.DS_Store
+Thumbs.db
+
+# Editor-Konfiguration
+.vscode/
+.idea/
