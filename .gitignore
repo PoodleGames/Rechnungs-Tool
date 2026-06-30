@@ -1,11 +1,17 @@
-# Generierte Rechnungen (enthalten echte Kundendaten — nicht versionieren)
+# Generated invoices (contain real customer data — never commit these)
 output/**
 !output/.gitkeep
 
-# Betriebssystem-Dateien
+# Personal/business data (replace with placeholder data before sharing or
+# committing this project anywhere; these files fill up with real customer
+# and company details once the tool is in use)
+data/kunden.json
+data/einstellungen.json
+
+# OS files
 .DS_Store
 Thumbs.db
 
-# Editor-Konfiguration
+# Editor configuration
 .vscode/
 .idea/

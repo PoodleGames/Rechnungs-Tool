@@ -2,10 +2,10 @@
   "kunden": [
     {
       "kundennummer": "K-00001",
-      "name": "Thomas Schweder",
-      "strasse": "Juliusplate 4",
-      "plz": "27804",
-      "ort": "Berne",
+      "name": "Max Mustermann",
+      "strasse": "Musterstraße 1",
+      "plz": "12345",
+      "ort": "Musterstadt",
       "telefon": "",
       "email": "",
       "notiz": ""

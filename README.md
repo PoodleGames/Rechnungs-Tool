@@ -1,129 +1,127 @@
-# Rechnungstool — Technische Dokumentation
+# Invoice Tool — Technical Documentation
 
-> Für die einfache Bedienungsanleitung als Endnutzer siehe `LIESMICH.txt`.
-> Dieses Dokument richtet sich an alle, die den Code verstehen oder
-> erweitern möchten.
+> For the simple end-user instructions, see `READ_ME_FIRST.txt`.
+> This document is for anyone who wants to understand or extend the code.
 
-Ein vollständig **serverloses** Rechnungstool im exakten DIN-A4-Layout.
-Läuft als reine HTML/CSS/JS-Anwendung direkt im Browser — keine
-Installation, kein Server, keine Laufzeitumgebung, keine Abhängigkeiten.
-
----
-
-## 1. Architektur-Entscheidung: Warum kein Server?
-
-Die Zielgruppe sind Laien/Endnutzer, die das Tool mit einem einzigen
-Doppelklick öffnen und benutzen können sollen — ohne PHP, Node, Python
-oder irgendetwas anderes zu installieren. Deshalb verzichtet dieses
-Projekt bewusst auf jedes Backend.
-
-Stattdessen übernimmt die **File System Access API** des Browsers
-(`window.showDirectoryPicker()`) die komplette Dateiarbeit:
-
-- Der Nutzer wählt einmalig den Projektordner aus (ein Klick + ein
-  Browser-eigener Auswahldialog — keine Installation).
-- Der Browser merkt sich diese Berechtigung dauerhaft (in seiner eigenen
-  IndexedDB), sodass der Dialog nur beim allerersten Start erscheint.
-- Danach liest und schreibt JavaScript direkt die echten JSON-Dateien
-  unter `data/` sowie die Rechnungen unter `output/` — ganz ohne
-  Server dazwischen.
-
-**Unterstützte Browser:** Chrome, Microsoft Edge (und andere
-Chromium-Browser). Edge ist auf jedem Windows-Rechner vorinstalliert.
-Firefox und Safari unterstützen `showDirectoryPicker()` aktuell nicht
-— das Tool erkennt das automatisch und zeigt einen klaren Hinweis statt
-unklar zu scheitern (siehe `zeigeBrowserHinweis()` in `js/common.js`).
-
-`file://`-Seiten gelten browserseitig als "secure context", weshalb die
-API auch beim direkten Doppelklick auf die lokale HTML-Datei funktioniert
-(keine HTTPS- oder localhost-Server-Pflicht).
+A fully **serverless** invoicing tool with a pixel-exact A4 layout. Runs
+as a pure HTML/CSS/JS application directly in the browser — no
+installation, no server, no runtime, no dependencies.
 
 ---
 
-## 2. Projektstruktur
+## 1. Architecture decision: why no server?
+
+The target audience is non-technical end users who should be able to
+open and use the tool with a single double-click — without installing
+PHP, Node, Python, or anything else. That's why this project
+deliberately has no backend at all.
+
+Instead, the browser's **File System Access API**
+(`window.showDirectoryPicker()`) handles all file work:
+
+- The user picks a folder once (a single click plus the browser's own
+  picker dialog — no installation involved).
+- The browser remembers this permission persistently (in its own
+  IndexedDB), so the dialog only appears the very first time.
+- After that, JavaScript reads and writes the real JSON files under
+  `data/`, as well as the invoices under `output/`, directly — with
+  no server in between.
+
+**Supported browsers:** Chrome, Microsoft Edge (or any other
+Chromium-based browser). Edge ships pre-installed on every Windows
+machine. Firefox and Safari don't currently support
+`showDirectoryPicker()` — the tool detects this automatically and
+shows a clear message instead of failing silently (see
+`zeigeBrowserHinweis()` in `js/common.js`).
+
+`file://` pages are treated as a "secure context" by browsers, which
+is why the API also works when the local HTML file is opened by
+double-click (no HTTPS or localhost server required).
+
+---
+
+## 2. Project structure
 
 ```
 rechnungstool/
-├── LIESMICH.txt              Anleitung für Endnutzer (einfache Sprache)
-├── README.md                 diese Datei
+├── READ_ME_FIRST.txt         end-user instructions (plain language)
+├── README.md                  this file
 │
-├── Rechnungstool.html        Hauptseite: Rechnung erstellen/bearbeiten
-├── Kunden.html                Kundenverwaltung
-├── Artikel.html                Artikelverwaltung
+├── Rechnungstool.html         main page: create/edit an invoice
+├── Kunden.html                 customer management
+├── Artikel.html                 item/catalog management
 │
 ├── css/
-│   └── style.css              gemeinsames Stylesheet (A4-Layout, Formulare)
+│   └── style.css                shared stylesheet (A4 layout, forms)
 │
 ├── js/
-│   ├── filestore.js            kapselt die komplette File System Access API
-│   ├── common.js                Verbindungs-Overlay + allgemeine Helfer
-│   ├── invoice.js                Logik der Rechnungsseite
-│   ├── kunden.js                 Logik der Kundenverwaltung
-│   └── artikel.js                Logik der Artikelverwaltung
+│   ├── filestore.js              wraps the entire File System Access API
+│   ├── common.js                  connection overlay + shared helpers
+│   ├── invoice.js                  logic for the invoice page
+│   ├── kunden.js                    logic for customer management
+│   └── artikel.js                    logic for item/catalog management
 │
-├── data/                      ── echte JSON-Datenbanken ──
-│   ├── kunden.json              Kundenstammdaten + Kundennummern-Zähler
-│   ├── artikel.json              Artikelkatalog (Title, Description, Preis, …)
-│   └── einstellungen.json        Firmendaten, Footer-Texte, Rechnungsnummern-Zähler
+├── data/                      ── the actual JSON databases ──
+│   ├── kunden.json               customer records + customer number counter
+│   ├── artikel.json               item catalog (title, description, price, …)
+│   └── einstellungen.json         company details, footer text, invoice number counter
 │
-└── output/                    ── generierte Rechnungen (automatisch erstellt) ──
-    └── {Kundennummer}_{Kundenname}/
-        └── Rechnung_{Nummer}_{Datum}.html
+└── output/                    ── generated invoices (created automatically) ──
+    └── {customer_number}_{customer_name}/
+        └── Rechnung_{number}_{date}.html
 ```
 
-Es gibt absichtlich **keinen** `backend/`-Ordner und **keine**
-Server-Datei mehr — der gesamte Dateizugriff läuft über
-`js/filestore.js`.
+There is intentionally **no** `backend/` folder and **no** server file
+anymore — all file access goes through `js/filestore.js`.
 
 ---
 
-## 3. `js/filestore.js` im Detail
+## 3. `js/filestore.js` in detail
 
-Zentrale Klasse `FileStore`, eine einzige geteilte Instanz pro Seite
-(`const fileStore = new FileStore()`).
+A central `FileStore` class, instantiated once per page as a single
+shared instance (`const fileStore = new FileStore()`).
 
-| Methode | Zweck |
+| Method | Purpose |
 |---|---|
-| `versucheAutoVerbindung()` | Versucht beim Seitenstart, den zuvor gewählten Ordner automatisch (ohne erneuten Klick) wiederzuverbinden, sofern die Berechtigung noch besteht. |
-| `waehleProjektordner()` | Öffnet den Auswahldialog (muss durch einen echten Klick ausgelöst werden — Browser-Sicherheitsvorgabe). |
-| `leseJSON(dateiname, fallback)` | Liest eine JSON-Datei aus `data/`. Existiert sie noch nicht, wird sie automatisch mit dem übergebenen Fallback-Inhalt neu angelegt. |
-| `schreibeJSON(dateiname, data)` | Schreibt ein Objekt als formatiertes JSON in `data/` (überschreibt die komplette Datei). |
-| `vergibNaechsteRechnungsnummer()` | Liest `einstellungen.json`, erhöht den Zähler, schreibt sofort zurück, gibt die vergebene Nummer zurück. |
-| `vergibNaechsteKundennummer()` | Analog für Kundennummern in `kunden.json`. |
-| `speichereRechnungImKundenordner(...)` | Legt bei Bedarf den Kundenordner unter `output/` an und speichert die Rechnung als HTML-Datei darin. |
+| `versucheAutoVerbindung()` | On page load, tries to silently reconnect to the previously chosen folder if permission is still valid. |
+| `waehleProjektordner()` | Opens the folder picker (must be triggered by an actual click — a browser security requirement). |
+| `leseJSON(filename, fallback)` | Reads a JSON file from `data/`. If it doesn't exist yet, it's created automatically with the given fallback content. |
+| `schreibeJSON(filename, data)` | Writes an object as formatted JSON into `data/` (overwrites the whole file). |
+| `vergibNaechsteRechnungsnummer()` | Reads `einstellungen.json`, increments the counter, writes it back immediately, and returns the assigned number. |
+| `vergibNaechsteKundennummer()` | Same idea, for customer numbers in `kunden.json`. |
+| `speichereRechnungImKundenordner(...)` | Creates the customer's folder under `output/` if needed and saves the invoice as an HTML file inside it. |
 
-### Warum kein API-Layer mehr?
+### Why no API layer anymore?
 
-In der vorherigen Version gab es ein PHP-Backend mit einem zentralen
-`api.php`-Endpunkt, der bei jeder Anfrage die komplette JSON-Datei
-gelesen oder neu geschrieben hat — klassisches REST-Routing für etwas,
-das eigentlich nur "Datei komplett lesen" und "Datei komplett
-schreiben" war. Da der Browser jetzt direkt auf die Dateien zugreifen
-kann, entfällt dieser Umweg vollständig: `fileStore.leseJSON(...)` und
-`fileStore.schreibeJSON(...)` sind die einzigen zwei Operationen, die
-es überhaupt braucht.
-
----
-
-## 4. Konsistenz bei gleichzeitigem Zugriff
-
-Da JavaScript in einem Browser-Tab single-threaded läuft, sind
-einzelne Schreibvorgänge innerhalb eines Tabs automatisch sicher vor
-Race Conditions. Ein Sonderfall bleibt: Wenn der Nutzer **zwei Tabs
-gleichzeitig** mit demselben Projektordner offen hat und in beiden
-parallel eine Rechnung abspeichert, könnten theoretisch beide dieselbe
-Rechnungsnummer ziehen, bevor der jeweils andere Tab seine Änderung
-geschrieben hat.
-
-Für ein Einzelnutzer-Tool auf einem lokalen Rechner ist dieses Risiko
-vernachlässigbar (in der Praxis arbeitet ein Nutzer nicht in zwei Tabs
-gleichzeitig an zwei Rechnungen). Falls gewünscht, ließe sich das mit
-der `navigator.locks`-API weiter absichern — für den aktuellen Einsatzzweck
-wurde bewusst auf diese zusätzliche Komplexität verzichtet.
+The previous version had a PHP backend with a single `api.php`
+endpoint that, on every request, read or rewrote an entire JSON file —
+classic REST routing for something that was really just "read the
+whole file" and "write the whole file". Since the browser can now
+access the files directly, that detour is gone entirely:
+`fileStore.leseJSON(...)` and `fileStore.schreibeJSON(...)` are the
+only two operations the tool actually needs.
 
 ---
 
-## 5. Die JSON-Datenbanken im Detail
+## 4. Consistency under concurrent access
+
+Since JavaScript runs single-threaded within a browser tab, individual
+write operations within one tab are automatically safe from race
+conditions. One edge case remains: if the user has **two tabs open at
+once** on the same project folder and saves an invoice in both at
+nearly the same time, both could theoretically draw the same invoice
+number before the other tab's write completes.
+
+For a single-user tool running on a local machine, this risk is
+negligible in practice (a user doesn't typically work on two invoices
+in two tabs simultaneously). If stronger guarantees are needed, the
+`navigator.locks` API could be wrapped around the read-modify-write
+cycles in `filestore.js` — this extra complexity was deliberately
+skipped for the current use case.
+
+---
+
+## 5. The JSON databases in detail
 
 ### `data/kunden.json`
 ```json
@@ -131,10 +129,10 @@ wurde bewusst auf diese zusätzliche Komplexität verzichtet.
   "kunden": [
     {
       "kundennummer": "K-00001",
-      "name": "Thomas Schweder",
-      "strasse": "Juliusplate 4",
-      "plz": "27804",
-      "ort": "Berne",
+      "name": "Max Mustermann",
+      "strasse": "Musterstraße 1",
+      "plz": "12345",
+      "ort": "Musterstadt",
       "telefon": "",
       "email": "",
       "notiz": ""
@@ -143,6 +141,9 @@ wurde bewusst auf diese zusätzliche Komplexität verzichtet.
   "naechste_laufnummer": 2
 }
 ```
+(`kundennummer` = customer number, `strasse` = street, `plz` = postal
+code, `ort` = city, `telefon` = phone, `notiz` = note,
+`naechste_laufnummer` = next sequence number.)
 
 ### `data/artikel.json`
 ```json
@@ -150,58 +151,90 @@ wurde bewusst auf diese zusätzliche Komplexität verzichtet.
   "artikel": [
     {
       "id": "art-0001",
-      "title": "Rüsten",
-      "description": "Anfahrt, Vorbereitung, ...",
-      "einzelpreis": 95.00,
+      "title": "Example service",
+      "description": "Describe what this line item covers.",
+      "einzelpreis": 50.00,
       "einheit": "Stück",
       "ust": 0
     }
   ]
 }
 ```
+(`einzelpreis` = unit price, `einheit` = unit, e.g. "Stück" = piece,
+"Stunde" = hour, `ust` = VAT rate in %.)
 
-Beide Strukturen lassen sich beliebig um weitere Felder erweitern
-(z.B. `ust_id`, `kategorie`) — das Tool übernimmt zusätzliche Felder
-zwar nicht automatisch in die Formularmaske, aber die Datenbasis selbst
-bleibt davon unberührt und bricht nicht.
+Both structures can be extended with additional fields at any time
+(e.g. `ust_id`, `kategorie`) — the tool won't automatically surface
+new fields in the form UI, but the underlying data won't break either.
 
 ### `data/einstellungen.json`
-Enthält Firmendaten, Footer-Beschriftungen, Standard-Rabattsatz sowie
-den Zähler für fortlaufende Rechnungsnummern
-(`rechnungsnummer.naechste_laufnummer`). Präfix (`R-`) und Stellenzahl
-(`4` → vierstellig wie `0001`) lassen sich hier direkt anpassen.
+Holds company details, footer labels, the default discount
+percentage, and the counter for sequential invoice numbers
+(`rechnungsnummer.naechste_laufnummer`). The prefix (`R-`) and digit
+count (`4` → four digits like `0001`) can be adjusted directly here.
+
+> **Privacy note:** this file ships with generic placeholder values
+> (`Meine Firma`, `Musterstraße 1`, etc.) on purpose. Replace them with
+> your real company details directly inside the running tool (the
+> header, footer, and sign-off fields are all editable in place) or by
+> editing `data/einstellungen.json` yourself — never commit real
+> business or customer data into a shared or public copy of this
+> project.
 
 ---
 
-## 6. Der Ausgabeordner (`output/`)
+## 6. The output folder (`output/`)
 
-Beim Klick auf „Im Kundenordner ablegen“ entsteht automatisch:
+Clicking "Im Kundenordner ablegen" (file in customer folder)
+automatically creates:
 
 ```
 output/
-├── K-00001_Thomas_Schweder/
+├── K-00001_Max_Mustermann/
 │   ├── Rechnung_R-0001_2026-06-30.html
 │   └── Rechnung_R-0005_2026-07-12.html
-├── K-00002_Erika_Musterfrau/
+├── K-00002_Another_Customer/
 │   └── Rechnung_R-0002_2026-06-30.html
 └── _ohne_kundennummer/
     └── Rechnung_R-0003_2026-06-30.html
 ```
 
-Ordnername: `{Kundennummer}_{Kundenname}` (Umlaute/Sonderzeichen werden
-automatisch dateisystemsicher umgewandelt). Ohne eingetragene
-Kundennummer landet die Rechnung im Sammelordner `_ohne_kundennummer/`.
+Folder name pattern: `{customer_number}_{customer_name}` (umlauts and
+special characters are automatically converted into something
+filesystem-safe). Without a customer number entered, the invoice ends
+up in the catch-all folder `_ohne_kundennummer/` ("without customer
+number").
 
 ---
 
-## 7. Eigene Erweiterungen
+## 7. Extending the project
 
-- **Neue Felder bei Kunden/Artikeln:** JSON-Struktur erweitern, dann in
-  `Kunden.html`/`Artikel.html` ein passendes Formularfeld ergänzen und
-  in `js/kunden.js`/`js/artikel.js` beim Speichern/Laden mit übernehmen.
-- **Eigenes Rechnungsnummern-Format:** `data/einstellungen.json` →
-  `rechnungsnummer.praefix` und `rechnungsnummer.stellen` anpassen.
-- **Farben/Branding:** zentral in `css/style.css` über `#1a4f82`
-  (Hauptfarbe) und `#1a2a3a` (Dunkelblau) anpassbar.
-- **Striktere Nebenläufigkeitssicherung:** bei Bedarf `navigator.locks`
-  in `filestore.js` um die Lese-Ändere-Schreibe-Zyklen legen.
+- **New fields for customers/items:** extend the JSON structure, then
+  add a matching form field in `Kunden.html`/`Artikel.html` and wire it
+  up for load/save in `js/kunden.js`/`js/artikel.js`.
+- **Custom invoice number format:** adjust
+  `rechnungsnummer.praefix` and `rechnungsnummer.stellen` in
+  `data/einstellungen.json`.
+- **Colors/branding:** centrally adjustable in `css/style.css` via
+  `#1a4f82` (primary color) and `#1a2a3a` (dark blue).
+- **Stricter concurrency safety:** wrap the read-modify-write cycles in
+  `filestore.js` with `navigator.locks` if needed.
+
+---
+
+## 8. Data protection / privacy
+
+This tool stores all data locally on the user's own machine — nothing
+is ever transmitted to a server. That said, the `data/` and `output/`
+folders will contain real personal and business information once in
+use (customer names, addresses, invoice amounts). A few practical
+notes:
+
+- The `.gitignore` file excludes `output/` from version control by
+  default, since it fills up with real customer invoices over time.
+- If this project is shared, copied, or put under version control
+  (e.g. Git), make sure `data/kunden.json`, `data/einstellungen.json`,
+  and the contents of `output/` are reset to placeholder values or
+  excluded first — they are not anonymized automatically.
+- There is no telemetry, analytics, or network call of any kind in
+  this codebase; it works fully offline by design.

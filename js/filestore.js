@@ -243,7 +243,7 @@ class FileStore {
 
 /**
  * Wandelt Kundennummer + Name in einen dateisystemsicheren Ordnernamen um.
- * Beispiel: ("K-00001", "Thomas Schweder") -> "K-00001_Thomas_Schweder"
+ * Example: ("K-00001", "Max Mustermann") -> "K-00001_Max_Mustermann"
  */
 function baueKundenOrdnerNamen(kundennummer, kundenname) {
   const slugify = (text) => {
