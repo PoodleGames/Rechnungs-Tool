@@ -49,7 +49,10 @@ Musterstraße 1
       <div class="rn-row"><span class="rn-lbl">Rechnung Nr.:</span> <input type="text" id="feldRechnungsnummer" value="Entwurf" readonly title="Wird beim Speichern automatisch vergeben"></div>
       <div class="rn-row"><span class="rn-lbl">Datum:</span> <input type="date" id="feldDatum"></div>
       <div class="rn-row"><span class="rn-lbl">Kunden-Nr.:</span> <input type="text" id="feldKundennummer" value="" placeholder="K-00001"></div>
-      <div class="rn-row"><span class="rn-lbl">Leistungszeitraum:</span> <input type="text" id="feldLeistungszeitraum" value=""></div>
+      <div class="rn-row rn-zeitraum">
+        <span class="rn-lbl">Leistungszeitraum:</span><br>
+        <input type="date" id="feldLeistungszeitraumVon"> <span class="rn-bis">–</span> <input type="date" id="feldLeistungszeitraumBis">
+      </div>
     </div>
   </div>
 

@@ -103,6 +103,10 @@ html, body {
     border-bottom-color: #1a4f82; background: rgba(26,79,130,0.04);
   }
 }
+.inv-rechnungsinfo input[type="date"] { width: 108px; }
+.rn-bis { color: #888; margin: 0 2px; }
+.rn-zeitraum { margin-top: 3px; }
+.rn-zeitraum input[type="date"] { margin-top: 2px; }
 .inv-rechnungsinfo input[readonly] { color: #888; cursor: default; }
 @media screen {
   .inv-rechnungsinfo input[readonly]:hover, .inv-rechnungsinfo input[readonly]:focus {
