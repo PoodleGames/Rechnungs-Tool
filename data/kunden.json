@@ -1,15 +1,15 @@
-{
-  "kunden": [
-    {
-      "kundennummer": "K-00001",
-      "name": "Max Mustermann",
-      "strasse": "Musterstraße 1",
-      "plz": "12345",
-      "ort": "Musterstadt",
-      "telefon": "",
-      "email": "",
-      "notiz": ""
-    }
-  ],
-  "naechste_laufnummer": 2
+﻿{
+    "kunden":  [
+                   {
+                       "kundennummer":  "K-00001",
+                       "name":  "Max Mustermann",
+                       "strasse":  "Musterstraße 1",
+                       "plz":  "12345",
+                       "ort":  "Musterstadt",
+                       "telefon":  "",
+                       "email":  "",
+                       "notiz":  ""
+                   }
+               ],
+    "naechste_laufnummer":  0
 }

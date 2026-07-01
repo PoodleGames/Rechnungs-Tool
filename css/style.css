@@ -404,15 +404,3 @@ body.page-admin {
 .connect-box h2 { font-size: 14pt; color: #1a2a3a; margin-bottom: 14px; }
 .connect-box p { font-size: 9.5pt; color: #555; line-height: 1.6; margin-bottom: 10px; }
 .connect-hint { font-size: 8.2pt !important; color: #999 !important; }
-.connect-warning {
-  font-size: 8.6pt !important;
-  color: #92400e !important;
-  background: #fff7ed;
-  border: 1px solid #fed7aa;
-  border-radius: 6px;
-  padding: 8px 10px;
-  text-align: left;
-  line-height: 1.5 !important;
-}
-.connect-btn { margin-top: 10px; font-size: 10.5pt; padding: 11px 26px; }
-.connect-error { color: #c83220; font-size: 8.5pt; margin-top: 10px; }

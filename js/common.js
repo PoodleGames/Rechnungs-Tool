@@ -11,97 +11,37 @@
  */
 
 /**
- * Zeigt — falls nötig — den Verbindungs-Bildschirm und wartet, bis der
- * Nutzer den Projektordner ausgewählt hat. Wird von jeder Seite ganz am
- * Anfang aufgerufen, bevor irgendwelche Daten geladen werden.
- * Gibt ein Promise zurück, das erst auflöst, wenn fileStore verbunden ist.
+ * Prüft ob das Tool korrekt über localhost läuft.
+ * Gibt ein Promise zurück, das sofort auflöst wenn alles korrekt ist.
+ * Zeigt einen Hinweis wenn die Datei direkt (file://) geöffnet wurde.
  */
-function stelleDatenzugriffSicher() {
-  return new Promise((resolve) => {
-    if (!unterstuetztDateizugriff()) {
-      zeigeBrowserHinweis();
-      return; // löst absichtlich nie auf — Tool kann ohne passenden Browser nicht funktionieren
-    }
-
-    fileStore.versucheAutoVerbindung().then(verbunden => {
-      if (verbunden) {
-        resolve();
-        return;
-      }
-      zeigeVerbindenBildschirm(resolve);
-    });
-  });
+async function stelleDatenzugriffSicher() {
+  if (!unterstuetztDateizugriff()) {
+    zeigeFalschGeoeffnetHinweis();
+    return new Promise(() => {}); // hängt absichtlich
+  }
+  await fileStore.init();
 }
 
-function zeigeBrowserHinweis() {
-  const overlay = erzeugeOverlay();
+function zeigeFalschGeoeffnetHinweis() {
+  const overlay = document.createElement('div');
+  overlay.className = 'connect-overlay';
   overlay.innerHTML = `
     <div class="connect-box">
       <div class="connect-icon">⚠️</div>
-      <h2>Bitte Microsoft Edge oder Google Chrome verwenden</h2>
+      <h2>Bitte über start.bat öffnen</h2>
       <p>
-        Dieses Rechnungstool benötigt einen modernen Browser (Microsoft Edge
-        oder Google Chrome), um direkt auf Dateien zugreifen zu können.
-        Edge ist auf jedem Windows-Rechner bereits vorinstalliert.
-      </p>
-      <p class="connect-hint">Bitte öffne diese Datei stattdessen in Edge oder Chrome.</p>
-    </div>
-  `;
-}
-
-function zeigeVerbindenBildschirm(onConnected) {
-  const overlay = erzeugeOverlay();
-  overlay.innerHTML = `
-    <div class="connect-box">
-      <div class="connect-icon">📁</div>
-      <h2>Rechnungstool mit deinem Ordner verbinden</h2>
-      <p>
-        Klicke unten auf <strong>"Ordner auswählen"</strong>. Im sich
-        öffnenden Fenster musst du dann zu dem Ordner navigieren, in dem
-        sich diese Datei (<code>Rechnungstool.html</code>) befindet, und
-        genau diesen Ordner auswählen.
-      </p>
-      <p class="connect-warning">
-        ⚠️ Wichtig: Der Dialog öffnet sich möglicherweise zunächst in
-        einem anderen Ordner (z.B. "Dokumente"). Bitte navigiere darin
-        aktiv zum richtigen Ordner, statt einfach zu bestätigen — sonst
-        werden deine Daten am falschen Ort gespeichert.
+        Das Rechnungstool wurde direkt als Datei geöffnet.<br>
+        Bitte schließe diesen Tab und starte das Tool stattdessen
+        per Doppelklick auf <strong>start.bat</strong> im Projektordner.
       </p>
       <p class="connect-hint">
-        Das musst du nur beim ersten Mal machen — danach merkt sich der
-        Browser deine Auswahl automatisch. Die Unterordner "data" und
-        "output" werden darin automatisch angelegt, falls sie noch
-        nicht existieren.
+        start.bat startet automatisch einen lokalen Server und
+        öffnet das Tool im Browser — kein weiterer Schritt nötig.
       </p>
-      <button class="btn btn-primary connect-btn" id="btnOrdnerWaehlen">📂 Ordner auswählen</button>
-      <p class="connect-error" id="connectError" style="display:none;"></p>
     </div>
   `;
-
-  document.getElementById('btnOrdnerWaehlen').addEventListener('click', async () => {
-    const errorEl = document.getElementById('connectError');
-    errorEl.style.display = 'none';
-    try {
-      await fileStore.waehleProjektordner();
-      overlay.remove();
-      onConnected();
-    } catch (err) {
-      if (err.name === 'AbortError') return; // Nutzer hat Dialog abgebrochen, einfach nochmal versuchen lassen
-      errorEl.textContent = 'Hinweis: ' + err.message;
-      errorEl.style.display = 'block';
-    }
-  });
-}
-
-function erzeugeOverlay() {
-  let overlay = document.getElementById('connectOverlay');
-  if (!overlay) {
-    overlay = document.createElement('div');
-    overlay.id = 'connectOverlay';
-    overlay.className = 'connect-overlay';
-    document.body.appendChild(overlay);
-  }
-  return overlay;
+  document.body.appendChild(overlay);
 }
 
 /**
