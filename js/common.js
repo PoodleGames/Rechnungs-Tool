@@ -150,6 +150,16 @@ function heutigesDatumISO() {
 }
 
 /**
+ * Wandelt ein ISO-Datum (JJJJ-MM-TT, wie es <input type="date"> liefert)
+ * in das deutsche Anzeigeformat TT.MM.JJJJ um.
+ */
+function isoDatumZuDE(isoDatum) {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec((isoDatum || '').trim());
+  if (!match) return '';
+  return `${match[3]}.${match[2]}.${match[1]}`;
+}
+
+/**
  * Einfache HTML-Escape-Funktion, um XSS bei dynamisch eingefügten
  * Texten (z.B. aus JSON-Daten) zu vermeiden.
  */

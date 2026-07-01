@@ -194,37 +194,126 @@ function removePosition(id) {
   renderPositionen();
 }
 
+const POSITIONEN_PRO_SEITE = 5;
+
 function renderPositionen() {
-  const body = document.getElementById('positionsBody');
-  body.innerHTML = '';
+  // ── Seite 1 bleibt immer im DOM, unverändert in Struktur ──
+  // Alle zuvor erzeugten Folgeseiten entfernen (werden gleich neu gebaut).
+  document.querySelectorAll('.invoice-page-extra').forEach(el => el.remove());
 
-  positionen.forEach((pos, idx) => {
-    const tr = document.createElement('tr');
-    tr.className = 'item-row';
-    tr.innerHTML = `
-      <td class="item-pos">${idx + 1}.</td>
-      <td>
-        <div class="autocomplete-wrap">
-          <textarea class="item-title-input" rows="1" data-id="${pos._id}" data-field="title" placeholder="Titel — tippen für Vorschläge" autocomplete="off">${escapeHtml(pos.title)}</textarea>
-          <div class="autocomplete-list" data-list-for="${pos._id}"></div>
-        </div>
-        <textarea class="item-desc-input" rows="2" data-id="${pos._id}" data-field="description" placeholder="Beschreibung">${escapeHtml(pos.description)}</textarea>
-      </td>
-      <td class="num"><input class="item-num-input" type="number" min="0" step="0.01" data-id="${pos._id}" data-field="menge" value="${pos.menge}"></td>
-      <td><input class="item-num-input" style="text-align:left" type="text" data-id="${pos._id}" data-field="einheit" value="${escapeHtml(pos.einheit)}"></td>
-      <td class="num"><input class="item-num-input" type="number" min="0" step="1" data-id="${pos._id}" data-field="ust" value="${pos.ust}">%</td>
-      <td class="num"><input class="item-num-input" type="text" data-id="${pos._id}" data-field="einzelpreis" value="${formatEuro(pos.einzelpreis)}"></td>
-      <td class="num item-gesamt" data-row="${pos._id}">€ ${formatEuro(pos.menge * pos.einzelpreis)}</td>
-      <td class="no-print item-actions-cell">
-        <div class="item-row-actions">
-          <button class="row-btn" type="button" title="Position duplizieren" onclick="duplicatePosition('${pos._id}')">+</button>
-          <button class="row-btn minus" type="button" title="Position entfernen" onclick="removePosition('${pos._id}')">−</button>
-        </div>
-      </td>
-    `;
-    body.appendChild(tr);
-  });
+  // Positions-Chunks: je 5 pro Seite.
+  const seiten = [];
+  for (let i = 0; i < positionen.length; i += POSITIONEN_PRO_SEITE) {
+    seiten.push(positionen.slice(i, i + POSITIONEN_PRO_SEITE));
+  }
+  if (seiten.length === 0) seiten.push([]);
 
+  const gesamtSeiten = seiten.length;
+
+  // ── Seite 1: Positionen in die bestehende Tabelle schreiben ──
+  const ersteBody = document.getElementById('positionsBody');
+  ersteBody.innerHTML = '';
+  seiten[0].forEach((pos, idx) => ersteBody.appendChild(buildPositionRow(pos, idx)));
+  aktiviereZeilenEvents(ersteBody);
+
+  // Summen auf Seite 1 nur anzeigen wenn es genau EINE Seite gibt.
+  document.querySelector('#invoicePage .inv-totals-wrap').style.display =
+    gesamtSeiten === 1 ? '' : 'none';
+
+  // Seitenzahl Seite 1.
+  setSeitenzahl(document.getElementById('invoicePage'), 1, gesamtSeiten);
+
+  // ── Folgeseiten: Klon von Seite 1, bereinigt und befüllt ──
+  const container = document.getElementById('pagesContainer');
+
+  for (let s = 1; s < gesamtSeiten; s++) {
+    const istLetzte = s === gesamtSeiten - 1;
+
+    // Seite 1 klonen — das ergibt exakt dasselbe Layout.
+    const klon = document.getElementById('invoicePage').cloneNode(true);
+    klon.id = '';
+    klon.classList.add('invoice-page-extra');
+
+    // Doppelte IDs entfernen (im Klon nicht nötig, da wir keine IDs auslesen).
+    klon.querySelectorAll('[id]').forEach(el => el.removeAttribute('id'));
+
+    // Kundenpicker-Bar (Dropdown + Button) ausblenden — nur auf Seite 1 sinnvoll.
+    klon.querySelectorAll('.no-print').forEach(el => el.remove());
+
+    // Positionen dieser Seite in die Klon-Tabelle schreiben.
+    const klonBody = klon.querySelector('.inv-items-table tbody');
+    klonBody.innerHTML = '';
+    const startIdx = s * POSITIONEN_PRO_SEITE;
+    seiten[s].forEach((pos, idx) => {
+      // Für Folgeseiten werden statische (nicht-editierbare) Zeilen erzeugt —
+      // Bearbeitung läuft immer über die Original-Zeilen auf Seite 1 bzw.
+      // die Eingabe-Steuerelemente, die ohnehin nur auf Seite 1 existieren.
+      const row = buildPositionRow(pos, startIdx + idx);
+      klonBody.appendChild(row);
+    });
+    aktiviereZeilenEvents(klonBody);
+
+    // Summen: nur auf der letzten Seite anzeigen.
+    const klonTotals = klon.querySelector('.inv-totals-wrap');
+    if (klonTotals) klonTotals.style.display = istLetzte ? '' : 'none';
+
+    // Seitenzahl.
+    setSeitenzahl(klon, s + 1, gesamtSeiten);
+
+    container.appendChild(klon);
+  }
+
+  berechneSummen();
+  checkOverflow();
+}
+
+/**
+ * Setzt die Seitenzahl-Anzeige ("Seite X von N") auf einer Seite.
+ * Bei nur einer Seite bleibt die Anzeige leer — kein "Seite 1 von 1".
+ */
+function setSeitenzahl(seitenEl, nummer, gesamt) {
+  let badge = seitenEl.querySelector('.inv-pagenumber');
+  if (!badge) {
+    badge = document.createElement('div');
+    badge.className = 'inv-pagenumber';
+    seitenEl.appendChild(badge);
+  }
+  badge.textContent = gesamt > 1 ? `Seite ${nummer} von ${gesamt}` : '';
+}
+
+
+function buildPositionRow(pos, idx) {
+  const tr = document.createElement('tr');
+  tr.className = 'item-row';
+  tr.innerHTML = `
+    <td class="item-pos">${idx + 1}.</td>
+    <td>
+      <div class="autocomplete-wrap">
+        <textarea class="item-title-input" rows="1" data-id="${pos._id}" data-field="title" placeholder="Titel — tippen für Vorschläge" autocomplete="off">${escapeHtml(pos.title)}</textarea>
+        <div class="autocomplete-list" data-list-for="${pos._id}"></div>
+      </div>
+      <textarea class="item-desc-input" rows="2" data-id="${pos._id}" data-field="description" placeholder="Beschreibung">${escapeHtml(pos.description)}</textarea>
+    </td>
+    <td class="num"><input class="item-num-input" type="number" min="0" step="0.01" data-id="${pos._id}" data-field="menge" value="${pos.menge}"></td>
+    <td><input class="item-num-input" style="text-align:left" type="text" data-id="${pos._id}" data-field="einheit" value="${escapeHtml(pos.einheit)}"></td>
+    <td class="num"><input class="item-num-input" type="number" min="0" step="1" data-id="${pos._id}" data-field="ust" value="${pos.ust}">%</td>
+    <td class="num"><input class="item-num-input" type="text" data-id="${pos._id}" data-field="einzelpreis" value="${formatEuro(pos.einzelpreis)}"></td>
+    <td class="num item-gesamt" data-row="${pos._id}">€ ${formatEuro(pos.menge * pos.einzelpreis)}</td>
+    <td class="no-print item-actions-cell">
+      <div class="item-row-actions">
+        <button class="row-btn" type="button" title="Position duplizieren" onclick="duplicatePosition('${pos._id}')">+</button>
+        <button class="row-btn minus" type="button" title="Position entfernen" onclick="removePosition('${pos._id}')">−</button>
+      </div>
+    </td>
+  `;
+  return tr;
+}
+
+/**
+ * Hängt an eine Tabellen-tbody die nötigen Event-Listener (Eingabe-Handler,
+ * Autocomplete) an — identisch für Seite 1 und alle Folgeseiten.
+ */
+function aktiviereZeilenEvents(body) {
   body.querySelectorAll('textarea, input').forEach(el => {
     el.addEventListener('input', onPositionFieldChange);
     if (el.tagName === 'TEXTAREA') autoResize(el);
@@ -239,9 +328,6 @@ function renderPositionen() {
       setTimeout(() => closeAutocomplete(el.dataset.id), 150);
     });
   });
-
-  berechneSummen();
-  checkOverflow();
 }
 
 /* ── ARTIKEL-AUTOFILL BEIM TIPPEN ── */
@@ -359,9 +445,13 @@ function berechneSummen() {
 
 /* ── OVERFLOW-PRÜFUNG ── */
 function checkOverflow() {
-  const page = document.getElementById('invoicePage');
+  const seiten = document.querySelectorAll('.invoice-page');
   const bar = document.getElementById('overflowBar');
-  bar.classList.toggle('visible', page.scrollHeight > page.offsetHeight + 2);
+  let ueberlauf = false;
+  seiten.forEach(page => {
+    if (page.scrollHeight > page.offsetHeight + 2) ueberlauf = true;
+  });
+  bar.classList.toggle('visible', ueberlauf);
 }
 
 /* ── HTML-EXPORT (lokaler Download) ── */
@@ -401,11 +491,11 @@ function saveHTML() {
 
 /* ── PDF-EXPORT über Druckdialog (identisch zur Vorlage) ── */
 function printPDF() {
-  const page = document.getElementById('invoicePage');
+  const container = document.getElementById('pagesContainer');
   const styles = Array.from(document.querySelectorAll('link[rel="stylesheet"], style'))
     .map(s => s.outerHTML).join('\n');
 
-  const printClone = page.cloneNode(true);
+  const printClone = container.cloneNode(true);
   printClone.querySelectorAll('textarea, input').forEach(el => {
     if (el.tagName === 'TEXTAREA') {
       const div = document.createElement('div');
@@ -429,7 +519,9 @@ function printPDF() {
     @page { size: 210mm 297mm; margin: 0; }
     html, body { margin:0; padding:0; background:#fff; display:block; }
     .no-print { display: none !important; }
-    .invoice-page { box-shadow: none; width: 210mm; height: 297mm; }
+    .invoice-page { box-shadow: none; width: 210mm; height: 297mm; page-break-after: always; }
+    .invoice-page:last-child { page-break-after: auto; }
+    #pagesContainer { gap: 0; }
   </style>
   </head><body>${printClone.outerHTML}</body></html>`);
   doc.close();

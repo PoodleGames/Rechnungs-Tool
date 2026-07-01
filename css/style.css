@@ -26,10 +26,19 @@ html, body {
   }
 }
 
+#pagesContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 22px;
+}
+
 @media print {
   html, body { background: #fff !important; padding: 0 !important; margin: 0 !important; display: block !important; }
   .no-print { display: none !important; }
-  .invoice-page { box-shadow: none !important; margin: 0 !important; }
+  .invoice-page { box-shadow: none !important; margin: 0 !important; page-break-after: always; }
+  .invoice-page:last-child { page-break-after: auto; }
+  #pagesContainer { gap: 0; }
   @page { size: 210mm 297mm; margin: 0; }
 }
 
@@ -271,6 +280,15 @@ html, body {
 .inv-footer .footer-col.right { text-align: right; }
 .inv-footer [contenteditable] { outline: none; border-radius: 3px; }
 @media screen { .inv-footer [contenteditable]:hover { background: rgba(26,79,130,0.05); } }
+
+/* ════ SEITENZAHL ════ */
+.inv-pagenumber {
+  position: absolute;
+  bottom: 8px;
+  right: 48px;
+  font-size: 7.5pt;
+  color: #999;
+}
 
 /* ════ BLOCK HOVER EDIT (für contenteditable Felder generell) ════ */
 [contenteditable="true"] { cursor: text; }
