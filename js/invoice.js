@@ -526,7 +526,10 @@ function printPDF() {
   </head><body>${printClone.outerHTML}</body></html>`);
   doc.close();
 
+  let gedruckt = false;
   const doPrint = () => {
+    if (gedruckt) return;
+    gedruckt = true;
     try { iframe.contentWindow.focus(); iframe.contentWindow.print(); }
     finally { setTimeout(() => { if (iframe.parentNode) document.body.removeChild(iframe); }, 2000); }
   };
