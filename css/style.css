@@ -23,6 +23,7 @@ html, body {
     justify-content: flex-start;
     padding: 28px 0 110px;
     min-height: 100vh;
+    height: auto;
   }
 }
 
@@ -31,6 +32,7 @@ html, body {
   flex-direction: column;
   align-items: center;
   gap: 22px;
+  width: 100%;
 }
 
 @media print {
@@ -244,6 +246,14 @@ html, body {
   padding: 5px 9px; background: #fff; color: #333; cursor: pointer;
 }
 .add-item-bar button.primary { background: #1a4f82; color: #fff; border-color: #1a4f82; }
+.max-pos-label {
+  margin-left: auto; font-size: 7.8pt; color: #888;
+  display: flex; align-items: center; gap: 5px; white-space: nowrap;
+}
+.max-pos-label input {
+  width: 42px; font-size: 8pt; border: 1px solid #ccc; border-radius: 4px;
+  padding: 4px 5px; text-align: center; font-family: inherit;
+}
 
 /* ════ SUMMEN ════ */
 .inv-totals-wrap { padding: 14px 48px 0; flex-shrink: 0; }

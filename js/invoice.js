@@ -65,6 +65,19 @@ async function init() {
   document.getElementById('rabattProzent').addEventListener('input', berechneSummen);
   document.getElementById('invoicePage').addEventListener('input', checkOverflow);
 
+  // Wenn der Nutzer Adresse/Firma/Titel auf Seite 1 direkt bearbeitet,
+  // sollen die Folgeseiten sofort synchron aktualisiert werden (Single Source of Truth).
+  ['empfaengerBlock', 'firmaName', 'firmaAdresse', 'firmaKontakt',
+   'anredeBlock', 'feldBetreff', 'feldRechnungsnummer', 'feldKundennummer',
+   'feldLeistungszeitraumVon', 'feldLeistungszeitraumBis'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', () => {
+      if (document.querySelectorAll('.invoice-page-extra').length > 0) {
+        renderPositionen();
+      }
+    });
+  });
+
   checkOverflow();
   if (window.ResizeObserver) new ResizeObserver(checkOverflow).observe(document.getElementById('invoicePage'));
 }
@@ -194,19 +207,23 @@ function removePosition(id) {
   renderPositionen();
 }
 
-const POSITIONEN_PRO_SEITE = 5;
+function berechneSeiten(positionen) {
+  const max = parseInt(document.getElementById('maxPositionenProSeite').value, 10) || 5;
+  if (positionen.length === 0) return [[]];
+  const seiten = [];
+  for (let i = 0; i < positionen.length; i += max) {
+    seiten.push(positionen.slice(i, i + max));
+  }
+  return seiten;
+}
 
 function renderPositionen() {
   // ── Seite 1 bleibt immer im DOM, unverändert in Struktur ──
   // Alle zuvor erzeugten Folgeseiten entfernen (werden gleich neu gebaut).
   document.querySelectorAll('.invoice-page-extra').forEach(el => el.remove());
 
-  // Positions-Chunks: je 5 pro Seite.
-  const seiten = [];
-  for (let i = 0; i < positionen.length; i += POSITIONEN_PRO_SEITE) {
-    seiten.push(positionen.slice(i, i + POSITIONEN_PRO_SEITE));
-  }
-  if (seiten.length === 0) seiten.push([]);
+  // Positionen aufteilen: 7 pro normale Seite, max 5 auf der letzten Seite.
+  const seiten = berechneSeiten(positionen);
 
   const gesamtSeiten = seiten.length;
 
@@ -229,35 +246,35 @@ function renderPositionen() {
   for (let s = 1; s < gesamtSeiten; s++) {
     const istLetzte = s === gesamtSeiten - 1;
 
-    // Seite 1 klonen — das ergibt exakt dasselbe Layout.
     const klon = document.getElementById('invoicePage').cloneNode(true);
     klon.id = '';
     klon.classList.add('invoice-page-extra');
 
-    // Doppelte IDs entfernen (im Klon nicht nötig, da wir keine IDs auslesen).
+    // Doppelte IDs entfernen
     klon.querySelectorAll('[id]').forEach(el => el.removeAttribute('id'));
 
-    // Kundenpicker-Bar (Dropdown + Button) ausblenden — nur auf Seite 1 sinnvoll.
-    klon.querySelectorAll('.no-print').forEach(el => el.remove());
+    // Nur den Kundenpicker ausblenden, NICHT alle .no-print Elemente
+    // (die +/- Buttons und add-item-bar sollen auf Folgeseiten bleiben)
+    const picker = klon.querySelector('#kundenPickerBar, [id="kundenPickerBar"]');
+    if (picker) picker.remove();
+    // Auch contenteditable auf Folgeseiten deaktivieren (nur Seite 1 editierbar)
+    klon.querySelectorAll('[contenteditable]').forEach(el => el.setAttribute('contenteditable', 'false'));
 
-    // Positionen dieser Seite in die Klon-Tabelle schreiben.
+    // Positionen dieser Seite schreiben
     const klonBody = klon.querySelector('.inv-items-table tbody');
     klonBody.innerHTML = '';
-    const startIdx = s * POSITIONEN_PRO_SEITE;
+    const max = parseInt(document.getElementById('maxPositionenProSeite').value, 10) || 5;
+    const startIdx = s * max;
     seiten[s].forEach((pos, idx) => {
-      // Für Folgeseiten werden statische (nicht-editierbare) Zeilen erzeugt —
-      // Bearbeitung läuft immer über die Original-Zeilen auf Seite 1 bzw.
-      // die Eingabe-Steuerelemente, die ohnehin nur auf Seite 1 existieren.
       const row = buildPositionRow(pos, startIdx + idx);
       klonBody.appendChild(row);
     });
     aktiviereZeilenEvents(klonBody);
 
-    // Summen: nur auf der letzten Seite anzeigen.
+    // Summen: nur auf der letzten Seite
     const klonTotals = klon.querySelector('.inv-totals-wrap');
     if (klonTotals) klonTotals.style.display = istLetzte ? '' : 'none';
 
-    // Seitenzahl.
     setSeitenzahl(klon, s + 1, gesamtSeiten);
 
     container.appendChild(klon);

@@ -87,6 +87,7 @@ vielen Dank für Ihren Auftrag, den wir wie folgt in Rechnung stellen:</div>
       <select id="artikelAuswahl"><option value="">+ Artikel aus Katalog wählen…</option></select>
       <button class="primary" onclick="addPositionFromCatalog()">Hinzufügen</button>
       <button onclick="addLeerePosition()">Leere Position</button>
+      <label class="max-pos-label">Max. pro Seite: <input type="number" id="maxPositionenProSeite" value="5" min="1" max="20" step="1" onchange="renderPositionen()"></label>
     </div>
   </div>
 
