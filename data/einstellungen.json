@@ -1,28 +1,28 @@
-{
-  "firma": {
-    "name": "Meine Firma",
-    "strasse": "Musterweg 1",
-    "plz": "41551",
-    "ort": "Musterstadt",
-    "telefon": "0000 0000000",
-    "email": "info@meine-firma.de",
-    "bank_name": "Musterbank",
-    "iban": "DE00 0000 0000 0000 0000 00",
-    "bic": "MUSTDEFFXXX",
-    "steuernummer": "00/000/00000",
-    "inhaber": "Vorname Nachname",
-    "kleinunternehmer_hinweis": "Gemäß § 19 UStG wird aufgrund der Kleinunternehmerregelung keine Umsatzsteuer erhoben.",
-    "zahlungshinweis": "Bitte überweisen Sie den Rechnungsbetrag innerhalb der nächsten 14 Tage auf das unten genannte Konto.",
-    "gruss": "Mit freundlichen Grüßen"
-  },
-  "footer": {
-    "rechtsspalte_titel": "Kontakt",
-    "rechtsspalte2_titel": "Bankverbindung"
-  },
-  "rechnungsnummer": {
-    "praefix": "R-",
-    "stellen": 4,
-    "naechste_laufnummer": 1
-  },
-  "standard_rabatt_prozent": 0
+﻿{
+    "firma":  {
+                  "name":  "Meine Firma",
+                  "strasse":  "Musterweg 1",
+                  "plz":  "41551",
+                  "ort":  "Musterstadt",
+                  "telefon":  "0000 0000000",
+                  "email":  "info@meine-firma.de",
+                  "bank_name":  "Musterbank",
+                  "iban":  "DE00 0000 0000 0000 0000 00",
+                  "bic":  "MUSTDEFFXXX",
+                  "steuernummer":  "00/000/00000",
+                  "inhaber":  "Vorname Nachname",
+                  "kleinunternehmer_hinweis":  "Gemäß § 19 UStG wird aufgrund der Kleinunternehmerregelung keine Umsatzsteuer erhoben.",
+                  "zahlungshinweis":  "Bitte überweisen Sie den Rechnungsbetrag innerhalb der nächsten 14 Tage auf das unten genannte Konto.",
+                  "gruss":  "Mit freundlichen Grüßen"
+              },
+    "footer":  {
+                   "rechtsspalte_titel":  "Kontakt",
+                   "rechtsspalte2_titel":  "Bankverbindung"
+               },
+    "rechnungsnummer":  {
+                            "praefix":  "R-",
+                            "stellen":  4,
+                            "naechste_laufnummer":  2
+                        },
+    "standard_rabatt_prozent":  0
 }

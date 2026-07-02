@@ -21,6 +21,11 @@ let einstellungen = {};
 let positionen = [];
 let posCounter = 0;
 
+/** Tracks whether the current invoice has been finalized */
+let invoiceFinalized = false;
+/** The finalized invoice record (stored in invoices.json) */
+let currentFinalizedInvoice = null;
+
 document.addEventListener('DOMContentLoaded', async () => {
   await stelleDatenzugriffSicher();
   await init();
@@ -65,21 +70,37 @@ async function init() {
   document.getElementById('rabattProzent').addEventListener('input', berechneSummen);
   document.getElementById('invoicePage').addEventListener('input', checkOverflow);
 
-  // Wenn der Nutzer Adresse/Firma/Titel auf Seite 1 direkt bearbeitet,
-  // sollen die Folgeseiten sofort synchron aktualisiert werden (Single Source of Truth).
-  ['empfaengerBlock', 'firmaName', 'firmaAdresse', 'firmaKontakt',
-   'anredeBlock', 'feldBetreff', 'feldRechnungsnummer', 'feldKundennummer',
-   'feldLeistungszeitraumVon', 'feldLeistungszeitraumBis'].forEach(id => {
+  // Alle Stammdaten-Felder auf Seite 1 synchronisieren die Folgeseiten,
+  // da diese komplette Klons von Seite 1 sind (Single Source of Truth).
+  // contenteditable-Felder feuern 'input', date/text-Inputs feuern 'input' oder 'change'.
+  const syncFelder = [
+    'empfaengerBlock','firmaName','firmaAdresse','firmaKontakt',
+    'anredeBlock','feldBetreff','feldKundennummer',
+    'feldRechnungsnummer',
+    'feldDatum','feldLeistungszeitraumVon','feldLeistungszeitraumBis',
+    'footerAbsenderTitel','footerAbsenderAdresse',
+    'footerKontaktTitel','footerKontaktInhalt',
+    'footerBankTitel','footerBankInhalt',
+    'grussText','grussName',
+    'hinweisUst','hinweisZahlung',
+  ];
+
+  const syncHandler = () => {
+    if (document.querySelectorAll('.invoice-page-extra').length > 0) {
+      renderPositionen();
+    }
+  };
+
+  syncFelder.forEach(id => {
     const el = document.getElementById(id);
-    if (el) el.addEventListener('input', () => {
-      if (document.querySelectorAll('.invoice-page-extra').length > 0) {
-        renderPositionen();
-      }
-    });
+    if (!el) return;
+    el.addEventListener('input', syncHandler);
+    el.addEventListener('change', syncHandler); // für date-Inputs
   });
 
   checkOverflow();
   if (window.ResizeObserver) new ResizeObserver(checkOverflow).observe(document.getElementById('invoicePage'));
+  updateExportButtonState();
 }
 
 /**
@@ -158,7 +179,12 @@ function uebernehmeKunde() {
   document.getElementById('empfaengerBlock').textContent =
     `${k.name}\n${k.strasse}\n${k.plz} ${k.ort}`;
   showToast(`Kunde "${k.name}" übernommen.`);
-  checkOverflow();
+
+  if (document.querySelectorAll('.invoice-page-extra').length > 0) {
+    renderPositionen();
+  } else {
+    checkOverflow();
+  }
 }
 
 /* ── ARTIKEL-DROPDOWN ── */
@@ -218,29 +244,29 @@ function berechneSeiten(positionen) {
 }
 
 function renderPositionen() {
-  // ── Seite 1 bleibt immer im DOM, unverändert in Struktur ──
-  // Alle zuvor erzeugten Folgeseiten entfernen (werden gleich neu gebaut).
   document.querySelectorAll('.invoice-page-extra').forEach(el => el.remove());
 
-  // Positionen aufteilen: 7 pro normale Seite, max 5 auf der letzten Seite.
   const seiten = berechneSeiten(positionen);
-
   const gesamtSeiten = seiten.length;
+  const max = parseInt(document.getElementById('maxPositionenProSeite').value, 10) || 5;
 
-  // ── Seite 1: Positionen in die bestehende Tabelle schreiben ──
+  // ── Seite 1 ──
   const ersteBody = document.getElementById('positionsBody');
   ersteBody.innerHTML = '';
   seiten[0].forEach((pos, idx) => ersteBody.appendChild(buildPositionRow(pos, idx)));
   aktiviereZeilenEvents(ersteBody);
 
-  // Summen auf Seite 1 nur anzeigen wenn es genau EINE Seite gibt.
+  // Summen nur wenn Seite 1 die letzte ist
   document.querySelector('#invoicePage .inv-totals-wrap').style.display =
     gesamtSeiten === 1 ? '' : 'none';
 
-  // Seitenzahl Seite 1.
+  // Add-Bar: auf Seite 1 nur zeigen wenn sie die letzte Seite ist
+  const addBar = document.getElementById('addItemBar');
+  addBar.style.display = gesamtSeiten === 1 ? '' : 'none';
+
   setSeitenzahl(document.getElementById('invoicePage'), 1, gesamtSeiten);
 
-  // ── Folgeseiten: Klon von Seite 1, bereinigt und befüllt ──
+  // ── Folgeseiten ──
   const container = document.getElementById('pagesContainer');
 
   for (let s = 1; s < gesamtSeiten; s++) {
@@ -250,33 +276,72 @@ function renderPositionen() {
     klon.id = '';
     klon.classList.add('invoice-page-extra');
 
-    // Doppelte IDs entfernen
+    // Stammdaten — nicht editierbar auf Folgeseiten
+    klon.querySelectorAll('[contenteditable]').forEach(el =>
+      el.setAttribute('contenteditable', 'false')
+    );
+
+    // Stammdaten-Inputs readonly — Positions-Inputs (data-id) bleiben editierbar
+    klon.querySelectorAll('input, textarea').forEach(el => {
+      if (!el.dataset.id && !el.classList.contains('rabatt-input-inline')) {
+        el.setAttribute('readonly', 'true');
+      }
+    });
+
+    // Kundenpicker + Max-Pos-Bar entfernen (nur Seite 1)
+    const klonPickerBar = klon.querySelector('#kundenPickerBar');
+    if (klonPickerBar) klonPickerBar.remove();
+    klon.querySelectorAll('.max-pos-bar').forEach(el => el.remove());
+
+    // Add-Bar: nur auf der letzten Seite anzeigen
+    const klonAddBar = klon.querySelector('#addItemBar');
+    if (klonAddBar) klonAddBar.style.display = istLetzte ? '' : 'none';
+
+    // Artikel-Select und Button auf der letzten Seite verdrahten
+    if (istLetzte && klonAddBar) {
+      const origSelect = document.getElementById('artikelAuswahl');
+      const klonSelect = klonAddBar.querySelector('select');
+      if (klonSelect && origSelect) {
+        klonSelect.innerHTML = origSelect.innerHTML;
+        const btn = klonAddBar.querySelector('button.primary');
+        if (btn) {
+          btn.onclick = null;
+          btn.addEventListener('click', () => {
+            origSelect.value = klonSelect.value;
+            addPositionFromCatalog();
+          });
+        }
+      }
+    }
+
+    // Rabatt-Input mit Seite-1-Rabatt synchronisieren
+    const klonRabatt = klon.querySelector('.rabatt-input-inline');
+    if (klonRabatt) {
+      const origRabatt = document.getElementById('rabattProzent');
+      klonRabatt.value = origRabatt.value;
+      klonRabatt.addEventListener('input', () => {
+        origRabatt.value = klonRabatt.value;
+        berechneSummen();
+      });
+    }
+
+    // IDs erst jetzt entfernen, nachdem alles oben per ID selektiert wurde
     klon.querySelectorAll('[id]').forEach(el => el.removeAttribute('id'));
 
-    // Nur den Kundenpicker ausblenden, NICHT alle .no-print Elemente
-    // (die +/- Buttons und add-item-bar sollen auf Folgeseiten bleiben)
-    const picker = klon.querySelector('#kundenPickerBar, [id="kundenPickerBar"]');
-    if (picker) picker.remove();
-    // Auch contenteditable auf Folgeseiten deaktivieren (nur Seite 1 editierbar)
-    klon.querySelectorAll('[contenteditable]').forEach(el => el.setAttribute('contenteditable', 'false'));
-
-    // Positionen dieser Seite schreiben
+    // Positionen dieser Seite — editierbar!
     const klonBody = klon.querySelector('.inv-items-table tbody');
     klonBody.innerHTML = '';
-    const max = parseInt(document.getElementById('maxPositionenProSeite').value, 10) || 5;
     const startIdx = s * max;
     seiten[s].forEach((pos, idx) => {
-      const row = buildPositionRow(pos, startIdx + idx);
-      klonBody.appendChild(row);
+      klonBody.appendChild(buildPositionRow(pos, startIdx + idx));
     });
     aktiviereZeilenEvents(klonBody);
 
-    // Summen: nur auf der letzten Seite
+    // Summen nur auf letzter Seite
     const klonTotals = klon.querySelector('.inv-totals-wrap');
     if (klonTotals) klonTotals.style.display = istLetzte ? '' : 'none';
 
     setSeitenzahl(klon, s + 1, gesamtSeiten);
-
     container.appendChild(klon);
   }
 
@@ -311,7 +376,7 @@ function buildPositionRow(pos, idx) {
       </div>
       <textarea class="item-desc-input" rows="2" data-id="${pos._id}" data-field="description" placeholder="Beschreibung">${escapeHtml(pos.description)}</textarea>
     </td>
-    <td class="num"><input class="item-num-input" type="number" min="0" step="0.01" data-id="${pos._id}" data-field="menge" value="${pos.menge}"></td>
+    <td class="num"><input class="item-num-input" type="number" min="1" step="1" data-id="${pos._id}" data-field="menge" value="${Math.round(pos.menge) || 1}"></td>
     <td><input class="item-num-input" style="text-align:left" type="text" data-id="${pos._id}" data-field="einheit" value="${escapeHtml(pos.einheit)}"></td>
     <td class="num"><input class="item-num-input" type="number" min="0" step="1" data-id="${pos._id}" data-field="ust" value="${pos.ust}">%</td>
     <td class="num"><input class="item-num-input" type="text" data-id="${pos._id}" data-field="einzelpreis" value="${formatEuro(pos.einzelpreis)}"></td>
@@ -429,7 +494,8 @@ function onPositionFieldChange(e) {
   if (!pos) return;
 
   if (field === 'menge') {
-    pos.menge = parseEuroInput(e.target.value);
+    pos.menge = Math.max(1, parseInt(e.target.value, 10) || 1);
+    e.target.value = pos.menge; // Korrigierten Wert zurückschreiben
   } else if (field === 'einzelpreis') {
     pos.einzelpreis = parseEuroInput(e.target.value);
   } else if (field === 'ust') {
@@ -440,22 +506,37 @@ function onPositionFieldChange(e) {
 
   if (e.target.tagName === 'TEXTAREA') autoResize(e.target);
 
-  const gesamtCell = document.querySelector(`.item-gesamt[data-row="${id}"]`);
-  if (gesamtCell) gesamtCell.textContent = '€ ' + formatEuro(pos.menge * pos.einzelpreis);
+  // Alle Gesamt-Zellen für diese Position aktualisieren (auch auf Folgeseiten)
+  document.querySelectorAll(`.item-gesamt[data-row="${id}"]`).forEach(cell =>
+    cell.textContent = '€ ' + formatEuro(pos.einzelpreis * pos.menge)
+  );
 
   berechneSummen();
 }
 
-/* ── SUMMEN (nicht direkt editierbar, nur berechnet) ── */
+/* ── SUMMEN — rechnet aus dem positionen-Array, schreibt in alle Seiten ── */
 function berechneSummen() {
-  const zwischensumme = positionen.reduce((sum, p) => sum + (p.menge * p.einzelpreis), 0);
-  const rabattProzent = parseFloat(document.getElementById('rabattProzent').value) || 0;
-  const rabattBetrag = zwischensumme * (rabattProzent / 100);
-  const gesamt = zwischensumme - rabattBetrag;
+  // Zwischensumme: sum(einzelpreis * menge) über alle Positionen
+  const zwischensumme = positionen.reduce((sum, p) => sum + (p.einzelpreis * p.menge), 0);
 
-  document.getElementById('sumZwischensumme').textContent = '€ ' + formatEuro(zwischensumme);
-  document.getElementById('sumRabatt').textContent = '-€ ' + formatEuro(rabattBetrag);
-  document.getElementById('sumGesamt').textContent = '€ ' + formatEuro(gesamt);
+  // Rabatt immer von Seite-1-Input lesen (Single Source of Truth)
+  const rabattProzent = parseFloat(document.getElementById('rabattProzent').value) || 0;
+  const rabattBetrag  = zwischensumme * (rabattProzent / 100);
+  const gesamt        = zwischensumme - rabattBetrag;
+
+  // In alle Summen-Elemente schreiben (Seite 1 per ID, letzte Seite per Klasse)
+  document.querySelectorAll('.sum-zwischensumme').forEach(el =>
+    el.textContent = '€ ' + formatEuro(zwischensumme));
+  document.querySelectorAll('.sum-rabatt').forEach(el =>
+    el.textContent = '-€ ' + formatEuro(rabattBetrag));
+  document.querySelectorAll('.sum-gesamt').forEach(el =>
+    el.textContent = '€ ' + formatEuro(gesamt));
+
+  // Rabatt-Inputs auf allen Seiten synchron halten
+  const rabattWert = document.getElementById('rabattProzent').value;
+  document.querySelectorAll('.rabatt-input-inline').forEach(el => {
+    if (el !== document.getElementById('rabattProzent')) el.value = rabattWert;
+  });
 
   checkOverflow();
 }
@@ -472,6 +553,131 @@ function checkOverflow() {
 }
 
 /* ── HTML-EXPORT (lokaler Download) ── */
+// ── INVOICE FINALIZATION ──────────────────────────────────────────────────────
+
+const DEFAULT_INVOICES = { invoices: [], next_sequence_number: 1 };
+
+/**
+ * Updates the enabled/disabled state of export buttons based on
+ * whether the invoice has been finalized.
+ */
+function updateExportButtonState() {
+  const exportButtons = ['btnSaveFolder', 'btnXml', 'btnPdf'];
+  exportButtons.forEach(id => {
+    const btn = document.getElementById(id);
+    if (!btn) return;
+    btn.disabled = !invoiceFinalized;
+    btn.title = invoiceFinalized ? '' : 'Erst Rechnung erstellen';
+    btn.style.opacity = invoiceFinalized ? '1' : '0.45';
+  });
+
+  const finalizeBtn = document.getElementById('btnFinalize');
+  if (finalizeBtn) {
+    finalizeBtn.disabled = invoiceFinalized;
+    finalizeBtn.style.opacity = invoiceFinalized ? '0.45' : '1';
+    finalizeBtn.title = invoiceFinalized
+      ? 'Rechnung bereits erstellt'
+      : '';
+  }
+}
+
+/**
+ * Finalizes the current invoice:
+ *  1. Assigns the next sequential invoice number
+ *  2. Saves a complete snapshot to data/invoices.json
+ *  3. Unlocks PDF and XML export buttons
+ */
+async function finalizeInvoice() {
+  if (invoiceFinalized) {
+    showToast('Diese Rechnung wurde bereits erstellt.', true);
+    return;
+  }
+
+  if (positionen.length === 0) {
+    showToast('Bitte mindestens eine Position hinzufügen.', true);
+    return;
+  }
+
+  if (!confirm('Rechnung jetzt erstellen und finalisieren?\n\nDanach wird eine fortlaufende Rechnungsnummer vergeben und die Rechnung kann nicht mehr geändert werden.')) {
+    return;
+  }
+
+  try {
+    // Read and update invoice store atomically
+    const store = await fileStore.leseJSON('invoices.json', DEFAULT_INVOICES);
+    const seqNum   = store.next_sequence_number || 1;
+    const settings = await fileStore.leseJSON('einstellungen.json', {});
+    const rn       = settings.rechnungsnummer || { praefix: 'R-', stellen: 4 };
+    const invoiceNumber = rn.praefix + String(seqNum).padStart(rn.stellen, '0');
+
+    // Build totals
+    const subtotal     = positionen.reduce((s, p) => s + p.einzelpreis * p.menge, 0);
+    const discountPct  = parseFloat(document.getElementById('rabattProzent').value) || 0;
+    const discountAmt  = subtotal * (discountPct / 100);
+    const grandTotal   = subtotal - discountAmt;
+
+    // Extract customer name from recipient block
+    const recipientLines = document.getElementById('empfaengerBlock')
+      .textContent.trim().split('\n').map(l => l.trim()).filter(Boolean);
+    const salutationPattern = /^(herrn?|frau|firma|z\.hd\.|an\s)/i;
+    const customerName = (recipientLines[0] && salutationPattern.test(recipientLines[0]))
+      ? (recipientLines[1] || '')
+      : (recipientLines[0] || '');
+
+    // Build invoice snapshot
+    const invoice = {
+      id:               'inv-' + Date.now(),
+      invoice_number:   invoiceNumber,
+      date:             document.getElementById('feldDatum').value,
+      subject:          document.getElementById('feldBetreff').value.trim(),
+      customer_number:  document.getElementById('feldKundennummer').value.trim(),
+      customer_name:    customerName,
+      service_from:     document.getElementById('feldLeistungszeitraumVon').value,
+      service_to:       document.getElementById('feldLeistungszeitraumBis').value,
+      line_items:       positionen.map(p => ({
+        title:        p.title,
+        description:  p.description,
+        quantity:     p.menge,
+        unit:         p.einheit,
+        unit_price:   p.einzelpreis,
+        vat_rate:     p.ust,
+        line_total:   p.einzelpreis * p.menge,
+      })),
+      totals: {
+        subtotal,
+        discount_percent: discountPct,
+        discount_amount:  discountAmt,
+        grand_total:      grandTotal,
+      },
+      status:        'finalized',
+      finalized_at:  new Date().toISOString(),
+    };
+
+    // Save to store
+    store.invoices = store.invoices || [];
+    store.invoices.push(invoice);
+    store.next_sequence_number = seqNum + 1;
+    await fileStore.schreibeJSON('invoices.json', store);
+
+    // Update UI
+    invoiceFinalized = true;
+    currentFinalizedInvoice = invoice;
+
+    // Set the real invoice number in the form field
+    document.getElementById('feldRechnungsnummer').value = invoiceNumber;
+
+    // Sync to continuation pages if they exist
+    if (document.querySelectorAll('.invoice-page-extra').length > 0) {
+      renderPositionen();
+    }
+
+    updateExportButtonState();
+    showToast(`Rechnung ${invoiceNumber} wurde erstellt.`);
+  } catch (err) {
+    showToast('Fehler beim Erstellen der Rechnung: ' + err.message, true);
+  }
+}
+
 function buildExportHTML() {
   const clone = document.documentElement.cloneNode(true);
   clone.querySelectorAll('.no-print, .action-btns, .overflow-bar, .toast, .connect-overlay, .autocomplete-list, #kundenPickerBar').forEach(el => el.remove());
@@ -482,7 +688,12 @@ function buildExportHTML() {
       div.className = el.className.replace('item-title-input', 'item-title').replace('item-desc-input', 'item-desc');
       div.textContent = el.value;
       el.replaceWith(div);
-    } else if (el.type !== 'date') {
+    } else if (el.type === 'date') {
+      const span = document.createElement('span');
+      span.className = 'field-value';
+      span.textContent = el.value ? isoDatumZuDE(el.value) : '';
+      el.replaceWith(span);
+    } else {
       const span = document.createElement('span');
       span.className = 'field-value';
       span.textContent = el.value;
@@ -493,17 +704,234 @@ function buildExportHTML() {
   return '<!DOCTYPE html>\n' + clone.outerHTML;
 }
 
-function saveHTML() {
-  const html = buildExportHTML();
-  const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  const nr = document.getElementById('feldRechnungsnummer').value.replace(/[^A-Za-z0-9\-]/g, '_');
+function exportXML() {
+  const esc = s => String(s ?? '')
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+  // Daten aus dem Formular lesen
+  const nr      = document.getElementById('feldRechnungsnummer').value.trim().replace(/\s*\(Entwurf\)/i, '');
+  const datum   = document.getElementById('feldDatum').value;           // YYYY-MM-DD
+  const lzVon   = document.getElementById('feldLeistungszeitraumVon').value;
+  const lzBis   = document.getElementById('feldLeistungszeitraumBis').value;
+  const knr     = document.getElementById('feldKundennummer').value.trim();
+  const betreff = document.getElementById('feldBetreff').value.trim();
+
+  // Firmendaten (Verkäufer)
+  const firmaName  = document.getElementById('firmaName').textContent.trim();
+  const firmaAdr   = document.getElementById('firmaAdresse').innerText.trim();
+  const firmaTel   = document.getElementById('firmaKontakt').innerText.trim();
+  const footerAdr  = document.getElementById('footerAbsenderAdresse').innerText.trim();
+
+  // Steuernummer aus Footer extrahieren
+  const steuernrMatch = footerAdr.match(/Steuernummer[:\s]+([^\n]+)/i);
+  const steuernr = steuernrMatch ? steuernrMatch[1].trim() : '';
+
+  // IBAN aus Footer
+  const bankInfo  = document.getElementById('footerBankInhalt').innerText.trim();
+  const ibanMatch = bankInfo.match(/IBAN[:\s]+([^\n]+)/i);
+  const bicMatch  = bankInfo.match(/BIC[:\s]+([^\n]+)/i);
+  const iban = ibanMatch ? ibanMatch[1].trim() : '';
+  const bic  = bicMatch  ? bicMatch[1].trim()  : '';
+
+  // Empfänger (Käufer)
+  // Empfänger parsen — erste Zeile kann Anrede sein (Herrn/Frau/Herr/Frau)
+  const empfLines = document.getElementById('empfaengerBlock')
+    .textContent.trim().split('\n').map(l => l.trim()).filter(Boolean);
+  const anredePattern = /^(herrn?|frau|firma|z\.hd\.|an\s)/i;
+  const empfOhneAnrede = empfLines[0] && anredePattern.test(empfLines[0])
+    ? empfLines.slice(1) : empfLines;
+  const kaeuferName    = empfOhneAnrede[0] || '';
+  const kaeuferStr     = empfOhneAnrede[1] || '';
+  const kaeuferPlzOrt  = empfOhneAnrede[2] || '';
+  const plzOrtParts    = kaeuferPlzOrt.match(/^(\d{4,5})\s+(.+)$/);
+  const kaeuferPlz     = plzOrtParts ? plzOrtParts[1] : kaeuferPlzOrt;
+  const kaeuferOrt     = plzOrtParts ? plzOrtParts[2] : '';
+
+  // Summen
+  const rabattProzent = parseFloat(document.getElementById('rabattProzent').value) || 0;
+  const zwischensumme = positionen.reduce((s, p) => s + p.einzelpreis * p.menge, 0);
+  const rabattBetrag  = zwischensumme * (rabattProzent / 100);
+  const gesamt        = zwischensumme - rabattBetrag;
+
+  // UN/ECE Einheitencodes — https://docs.peppol.eu/poacc/billing/3.0/codelist/UNECERec20/
+  const einheitCode = (e) => {
+    const map = {
+      'stück': 'C62', 'stk': 'C62', 'stk.': 'C62', 'stuck': 'C62',
+      'stunde': 'HUR', 'stunden': 'HUR', 'std': 'HUR', 'std.': 'HUR', 'h': 'HUR',
+      'minute': 'MIN', 'minuten': 'MIN', 'min': 'MIN',
+      'tag': 'DAY', 'tage': 'DAY',
+      'woche': 'WEE', 'wochen': 'WEE',
+      'monat': 'MON', 'monate': 'MON',
+      'jahr': 'ANN', 'jahre': 'ANN',
+      'meter': 'MTR', 'm': 'MTR',
+      'kilometer': 'KMT', 'km': 'KMT',
+      'kilogramm': 'KGM', 'kg': 'KGM',
+      'gramm': 'GRM', 'g': 'GRM',
+      'liter': 'LTR', 'l': 'LTR',
+      'pauschal': 'LS', 'pauschale': 'LS', 'psch': 'LS', 'psch.': 'LS',
+      'seite': 'EA', 'seiten': 'EA',
+      'stk ': 'C62',
+    };
+    return map[(e || '').toLowerCase().trim()] || 'C62';
+  };
+
+  // Datumsformat für XRechnung: YYYYMMDD
+  const toXRDate = iso => iso ? iso.replace(/-/g, '') : '';
+
+  // Positionen
+  const posLines = positionen.map((p, i) => `
+  <ram:IncludedSupplyChainTradeLineItem>
+    <ram:AssociatedDocumentLineDocument>
+      <ram:LineID>${i + 1}</ram:LineID>
+    </ram:AssociatedDocumentLineDocument>
+    <ram:SpecifiedTradeProduct>
+      <ram:Name>${esc(p.title)}</ram:Name>
+      ${p.description ? `<ram:Description>${esc(p.description)}</ram:Description>` : ''}
+    </ram:SpecifiedTradeProduct>
+    <ram:SpecifiedLineTradeAgreement>
+      <ram:NetPriceProductTradePrice>
+        <ram:ChargeAmount>${p.einzelpreis.toFixed(2)}</ram:ChargeAmount>
+      </ram:NetPriceProductTradePrice>
+    </ram:SpecifiedLineTradeAgreement>
+    <ram:SpecifiedLineTradeDelivery>
+      <ram:BilledQuantity unitCode="${einheitCode(p.einheit)}">${p.menge}</ram:BilledQuantity>
+    </ram:SpecifiedLineTradeDelivery>
+    <ram:SpecifiedLineTradeSettlement>
+      <ram:ApplicableTradeTax>
+        <ram:TypeCode>VAT</ram:TypeCode>
+        <ram:CategoryCode>E</ram:CategoryCode>
+        <ram:RateApplicablePercent>0</ram:RateApplicablePercent>
+      </ram:ApplicableTradeTax>
+      <ram:SpecifiedTradeSettlementLineMonetarySummation>
+        <ram:LineTotalAmount>${(p.einzelpreis * p.menge).toFixed(2)}</ram:LineTotalAmount>
+      </ram:SpecifiedTradeSettlementLineMonetarySummation>
+    </ram:SpecifiedLineTradeSettlement>
+  </ram:IncludedSupplyChainTradeLineItem>`).join('');
+
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<rsm:CrossIndustryInvoice
+  xmlns:rsm="urn:un:unece:uncefact:data:standard:CrossIndustryInvoice:100"
+  xmlns:ram="urn:un:unece:uncefact:data:standard:ReusableAggregateBusinessInformationEntity:100"
+  xmlns:udt="urn:un:unece:uncefact:data:standard:UnqualifiedDataType:100">
+
+  <rsm:ExchangedDocumentContext>
+    <ram:GuidelineSpecifiedDocumentContextParameter>
+      <ram:ID>urn:cen.eu:en16931:2017#compliant#urn:xoev-de:kosit:standard:xrechnung_2.3</ram:ID>
+    </ram:GuidelineSpecifiedDocumentContextParameter>
+  </rsm:ExchangedDocumentContext>
+
+  <rsm:ExchangedDocument>
+    <ram:ID>${esc(nr)}</ram:ID>
+    <ram:TypeCode>380</ram:TypeCode>
+    <ram:IssueDateTime>
+      <udt:DateTimeString format="102">${toXRDate(datum)}</udt:DateTimeString>
+    </ram:IssueDateTime>
+    ${betreff ? `<ram:IncludedNote><ram:Content>${esc(betreff)}</ram:Content></ram:IncludedNote>` : ''}
+  </rsm:ExchangedDocument>
+
+  <rsm:SupplyChainTradeTransaction>
+${posLines}
+    <ram:ApplicableHeaderTradeAgreement>
+      <ram:BuyerReference>${esc(knr)}</ram:BuyerReference>
+
+      <ram:SellerTradeParty>
+        <ram:Name>${esc(firmaName)}</ram:Name>
+        <ram:SpecifiedLegalOrganization>
+          <ram:TradingBusinessName>${esc(firmaName)}</ram:TradingBusinessName>
+        </ram:SpecifiedLegalOrganization>
+        ${steuernr ? `<ram:SpecifiedTaxRegistration>
+          <ram:ID schemeID="FC">${esc(steuernr)}</ram:ID>
+        </ram:SpecifiedTaxRegistration>` : ''}
+      </ram:SellerTradeParty>
+
+      <ram:BuyerTradeParty>
+        <ram:Name>${esc(kaeuferName)}</ram:Name>
+        <ram:PostalTradeAddress>
+          <ram:PostcodeCode>${esc(kaeuferPlz)}</ram:PostcodeCode>
+          <ram:CityName>${esc(kaeuferOrt)}</ram:CityName>
+          <ram:LineOne>${esc(kaeuferStr)}</ram:LineOne>
+          <ram:CountryID>DE</ram:CountryID>
+        </ram:PostalTradeAddress>
+      </ram:BuyerTradeParty>
+    </ram:ApplicableHeaderTradeAgreement>
+
+    <ram:ApplicableHeaderTradeDelivery>
+      ${lzVon || lzBis ? `<ram:ActualDeliverySupplyChainEvent>
+        <ram:OccurrenceDateTime>
+          <udt:DateTimeString format="102">${toXRDate(lzVon || lzBis)}</udt:DateTimeString>
+        </ram:OccurrenceDateTime>
+      </ram:ActualDeliverySupplyChainEvent>` : ''}
+    </ram:ApplicableHeaderTradeDelivery>
+
+    <ram:ApplicableHeaderTradeSettlement>
+      <ram:PaymentReference>${esc(nr)}</ram:PaymentReference>
+      <ram:InvoiceCurrencyCode>EUR</ram:InvoiceCurrencyCode>
+      ${iban ? `<ram:SpecifiedTradeSettlementPaymentMeans>
+        <ram:TypeCode>58</ram:TypeCode>
+        <ram:PayeePartyCreditorFinancialAccount>
+          <ram:IBANID>${esc(iban)}</ram:IBANID>
+        </ram:PayeePartyCreditorFinancialAccount>
+        ${bic ? `<ram:PayeeSpecifiedCreditorFinancialInstitution>
+          <ram:BICID>${esc(bic)}</ram:BICID>
+        </ram:PayeeSpecifiedCreditorFinancialInstitution>` : ''}
+      </ram:SpecifiedTradeSettlementPaymentMeans>` : ''}
+
+      <ram:ApplicableTradeTax>
+        <ram:CalculatedAmount>0.00</ram:CalculatedAmount>
+        <ram:TypeCode>VAT</ram:TypeCode>
+        <ram:ExemptionReason>Steuerbefreiung gemäß §19 UStG (Kleinunternehmer)</ram:ExemptionReason>
+        <ram:BasisAmount>${gesamt.toFixed(2)}</ram:BasisAmount>
+        <ram:CategoryCode>E</ram:CategoryCode>
+        <ram:ExemptionReasonCode>vatex-eu-ae</ram:ExemptionReasonCode>
+        <ram:RateApplicablePercent>0</ram:RateApplicablePercent>
+      </ram:ApplicableTradeTax>
+
+      ${lzVon ? `<ram:BillingSpecifiedPeriod>
+        <ram:StartDateTime>
+          <udt:DateTimeString format="102">${toXRDate(lzVon)}</udt:DateTimeString>
+        </ram:StartDateTime>
+        <ram:EndDateTime>
+          <udt:DateTimeString format="102">${toXRDate(lzBis || lzVon)}</udt:DateTimeString>
+        </ram:EndDateTime>
+      </ram:BillingSpecifiedPeriod>` : ''}
+
+      ${rabattBetrag > 0 ? `<ram:SpecifiedTradeAllowanceCharge>
+        <ram:ChargeIndicator><udt:Indicator>false</udt:Indicator></ram:ChargeIndicator>
+        <ram:CalculationPercent>${rabattProzent}</ram:CalculationPercent>
+        <ram:BasisAmount>${zwischensumme.toFixed(2)}</ram:BasisAmount>
+        <ram:ActualAmount>${rabattBetrag.toFixed(2)}</ram:ActualAmount>
+        <ram:CategoryTradeTax>
+          <ram:TypeCode>VAT</ram:TypeCode>
+          <ram:CategoryCode>E</ram:CategoryCode>
+          <ram:RateApplicablePercent>0</ram:RateApplicablePercent>
+        </ram:CategoryTradeTax>
+      </ram:SpecifiedTradeAllowanceCharge>` : ''}
+
+      <ram:SpecifiedTradePaymentTerms>
+        <ram:Description>${esc(document.getElementById('hinweisZahlung').textContent.trim())}</ram:Description>
+      </ram:SpecifiedTradePaymentTerms>
+
+      <ram:SpecifiedTradeSettlementHeaderMonetarySummation>
+        <ram:LineTotalAmount>${zwischensumme.toFixed(2)}</ram:LineTotalAmount>
+        <ram:AllowanceTotalAmount>${rabattBetrag.toFixed(2)}</ram:AllowanceTotalAmount>
+        <ram:TaxBasisTotalAmount>${gesamt.toFixed(2)}</ram:TaxBasisTotalAmount>
+        <ram:TaxTotalAmount currencyID="EUR">0.00</ram:TaxTotalAmount>
+        <ram:GrandTotalAmount>${gesamt.toFixed(2)}</ram:GrandTotalAmount>
+        <ram:DuePayableAmount>${gesamt.toFixed(2)}</ram:DuePayableAmount>
+      </ram:SpecifiedTradeSettlementHeaderMonetarySummation>
+    </ram:ApplicableHeaderTradeSettlement>
+  </rsm:SupplyChainTradeTransaction>
+</rsm:CrossIndustryInvoice>`;
+
+  const blob = new Blob([xml], { type: 'application/xml;charset=utf-8' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
   a.href = url;
-  a.download = `Rechnung_${nr}_${heutigesDatumISO()}.html`;
+  a.download = `Rechnung_${nr.replace(/[^A-Za-z0-9\-]/g,'_')}_${heutigesDatumISO()}.xml`;
   a.click();
   URL.revokeObjectURL(url);
-  showToast('HTML-Datei wurde heruntergeladen.');
+  showToast('XRechnung XML wurde heruntergeladen.');
 }
 
 /* ── PDF-EXPORT über Druckdialog (identisch zur Vorlage) ── */
@@ -519,9 +947,13 @@ function printPDF() {
       div.className = el.className.replace('item-title-input', 'item-title').replace('item-desc-input', 'item-desc');
       div.textContent = el.value;
       el.replaceWith(div);
-    } else if (el.type !== 'date') {
+    } else if (el.type === 'date') {
       const span = document.createElement('span');
-      span.textContent = el.value;
+      span.textContent = el.value ? isoDatumZuDE(el.value) : '';
+      el.replaceWith(span);
+    } else {
+      const span = document.createElement('span');
+      span.textContent = el.value.replace(/\s*\(Entwurf\)/i, '');
       el.replaceWith(span);
     }
   });

@@ -2,16 +2,16 @@
   "artikel": [
     {
       "id": "art-0001",
-      "title": "asdad",
-      "description": "asdfdagadgdsagsdgsdg",
+      "title": "Testartikel",
+      "description": "Dies ist ein Testartikel",
       "einzelpreis": 95.00,
       "einheit": "Stück",
       "ust": 0
     },
     {
       "id": "art-0002",
-      "title": "asd",
-      "description": "fdafd",
+      "title": "Zweitartikel",
+      "description": "Dies ist ein Zweitartikel",
       "einzelpreis": 75.00,
       "einheit": "Stück",
       "ust": 0

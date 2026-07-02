@@ -19,7 +19,17 @@
                        "telefon":  "213123",
                        "email":  "213123",
                        "notiz":  "213132"
+                   },
+                   {
+                       "kundennummer":  "K-00003",
+                       "name":  "Pter Test",
+                       "strasse":  "asd 2",
+                       "plz":  "22322",
+                       "ort":  "asdas das",
+                       "telefon":  "23 231231",
+                       "email":  "wdq@qwer.de",
+                       "notiz":  "dfasdf asdf asf asff sa fasf as asf as\nf asf asf"
                    }
                ],
-    "naechste_laufnummer":  3
+    "naechste_laufnummer":  4
 }

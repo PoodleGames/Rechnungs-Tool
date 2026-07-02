@@ -103,8 +103,18 @@ html, body {
 
 /* -- Rechnungsinfo-Block (Nr./Datum/Kundennr./Leistungszeitraum) -- */
 .inv-rechnungsinfo { display: inline-block; text-align: right; }
-.rn-row { font-size: 8.6pt; color: #222; line-height: 1.7; white-space: nowrap; }
-.rn-lbl { font-weight: 700; color: #1a2a3a; margin-right: 4px; }
+.rn-row { font-size: 8.6pt; color: #222; line-height: 1.7; white-space: nowrap; display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+.rn-lbl { font-weight: 700; color: #1a2a3a; flex-shrink: 0; }
+.rn-zeitraum-vals { text-align: right; display: flex; flex-direction: column; gap: 1px; }
+.rn-zeitraum-sub { display: flex; align-items: center; justify-content: flex-end; gap: 4px; }
+.rn-sublbl { font-size: 7.8pt; color: #888; }
+.max-pos-bar { padding: 6px 48px 0; display: flex; justify-content: flex-end; }
+
+/* Druck: Kalender-Icon ausblenden, Datum als normaler Text */
+@media print {
+  input[type="date"]::-webkit-calendar-picker-indicator { display: none; }
+  input[type="date"] { -webkit-appearance: none; appearance: none; }
+}
 .inv-rechnungsinfo input {
   font-size: 8.6pt; color: #222; border: none; border-bottom: 1px dashed transparent;
   font-family: inherit; background: transparent; padding: 1px 0; text-align: right; width: 110px;
@@ -115,9 +125,7 @@ html, body {
   }
 }
 .inv-rechnungsinfo input[type="date"] { width: 108px; }
-.rn-bis { color: #888; margin: 0 2px; }
-.rn-zeitraum { margin-top: 3px; }
-.rn-zeitraum input[type="date"] { margin-top: 2px; }
+
 .inv-rechnungsinfo input[readonly] { color: #888; cursor: default; }
 @media screen {
   .inv-rechnungsinfo input[readonly]:hover, .inv-rechnungsinfo input[readonly]:focus {
@@ -131,17 +139,21 @@ html, body {
   padding-bottom: 8px;
   flex-shrink: 0;
   display: flex;
-  align-items: flex-start;
+  align-items: flex-end;
   justify-content: space-between;
   border-bottom: 1.5px solid #1a2a3a;
 }
-.inv-doctitle-block { padding-top: 4px; }
+.inv-doctitle-block {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
 .inv-doctitle {
   font-size: 17pt;
   font-weight: 700;
   color: #1a2a3a;
   letter-spacing: 0.01em;
-  margin-bottom: 6px;
+  margin-bottom: 2px;
 }
 .inv-betreff-row { font-size: 8.6pt; color: #444; }
 .inv-betreff-row .rn-lbl { color: #444; }
@@ -414,3 +426,47 @@ body.page-admin {
 .connect-box h2 { font-size: 14pt; color: #1a2a3a; margin-bottom: 14px; }
 .connect-box p { font-size: 9.5pt; color: #555; line-height: 1.6; margin-bottom: 10px; }
 .connect-hint { font-size: 8.2pt !important; color: #999 !important; }
+
+/* ════ FINALIZE BUTTON ════ */
+.finalize-btn {
+  border: none; border-radius: 8px; padding: 10px 20px; font-size: 10pt;
+  font-family: inherit; font-weight: 600; cursor: pointer;
+  display: flex; align-items: center; gap: 8px;
+  background: #166534; color: #fff;
+  box-shadow: 0 3px 14px rgba(22,101,52,0.35);
+  transition: background 0.15s, transform 0.1s;
+}
+.finalize-btn:hover:not(:disabled) { background: #14532d; transform: translateY(-1px); }
+.finalize-btn:disabled { cursor: not-allowed; }
+.finalize-btn svg { width: 15px; height: 15px; flex-shrink: 0; }
+
+/* ════ CANCEL MODAL ════ */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(20,30,45,0.7);
+  display: flex; align-items: center; justify-content: center; z-index: 500;
+}
+.modal-box {
+  background: #fff; border-radius: 12px; padding: 28px 30px;
+  width: 420px; max-width: 92vw; box-shadow: 0 10px 40px rgba(0,0,0,0.25);
+}
+.modal-box h2 { font-size: 13pt; color: #1a2a3a; margin-bottom: 10px; }
+.modal-box p { font-size: 9.5pt; color: #444; margin-bottom: 6px; }
+.btn-sm { padding: 6px 13px; font-size: 8.5pt; }
+
+/* ════ INVOICE HISTORY ════ */
+.invoice-history-toolbar {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 14px; flex-wrap: wrap; gap: 10px;
+}
+.invoice-history-stats { font-size: 8.8pt; color: #555; display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.invoice-history-stats strong { color: #1a2a3a; }
+.stat-sep { color: #ccc; }
+.invoice-history-filters { font-size: 8.8pt; color: #555; display: flex; align-items: center; gap: 6px; }
+
+.status-badge {
+  display: inline-block; padding: 2px 8px; border-radius: 10px;
+  font-size: 7.4pt; font-weight: 700; letter-spacing: 0.03em;
+}
+.status-badge.active    { background: #dcfce7; color: #166534; }
+.status-badge.cancelled { background: #fee2e2; color: #991b1b; }
+.row-cancelled td { opacity: 0.55; }

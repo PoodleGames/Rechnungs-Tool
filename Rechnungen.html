@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rechnungshistorie</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body class="page-admin">
+
+<div class="admin-shell">
+
+  <div class="admin-header">
+    <h1>Geschriebene Rechnungen</h1>
+    <div class="admin-nav">
+      <a class="nav-btn" href="Rechnungstool.html">← Zur Rechnung</a>
+      <a class="nav-btn" href="Kunden.html">Kunden</a>
+      <a class="nav-btn" href="Artikel.html">Artikel</a>
+    </div>
+  </div>
+
+  <div class="admin-card">
+    <div class="invoice-history-toolbar">
+      <div class="invoice-history-stats" id="historyStats">Lade…</div>
+      <div class="invoice-history-filters">
+        <label>
+          <input type="checkbox" id="filterShowCancelled" checked onchange="renderInvoiceTable()">
+          Stornierte anzeigen
+        </label>
+      </div>
+    </div>
+    <table class="data-table" id="invoiceTable">
+      <thead>
+        <tr>
+          <th>Rechnungsnummer</th>
+          <th>Datum</th>
+          <th>Kunde</th>
+          <th>Betreff</th>
+          <th class="num">Gesamt</th>
+          <th>Status</th>
+          <th style="width:100px;"></th>
+        </tr>
+      </thead>
+      <tbody id="invoiceTableBody">
+        <tr><td colspan="7" class="empty-state">Lade Rechnungen…</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+<!-- CANCEL MODAL -->
+<div class="modal-overlay" id="cancelModal" style="display:none;">
+  <div class="modal-box">
+    <h2>Rechnung stornieren</h2>
+    <p>Rechnung <strong id="cancelInvoiceNr"></strong> stornieren?</p>
+    <p class="hint-text">Die Rechnung bleibt in der Liste sichtbar und wird als storniert markiert. Die Rechnungsnummer wird nicht erneut vergeben.</p>
+    <div class="form-field" style="margin-top:14px;">
+      <label>Grund (optional)</label>
+      <textarea id="cancelReason" placeholder="z.B. Doppelt erstellt, Kundenwunsch…" rows="3"></textarea>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-secondary" onclick="closeCancelModal()">Abbrechen</button>
+      <button class="btn btn-danger" onclick="confirmCancel()">Stornieren</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="globalToast"></div>
+
+<script src="js/filestore.js"></script>
+<script src="js/common.js"></script>
+<script src="js/invoices.js"></script>
+</body>
+</html>

@@ -1,0 +1,83 @@
+﻿{
+    "invoices":  [
+                     {
+                         "id":  "inv-1782995026055",
+                         "invoice_number":  "R-0001",
+                         "date":  "2026-07-02",
+                         "subject":  "Dienstleistung",
+                         "customer_number":  "",
+                         "customer_name":  "Max Mustermann",
+                         "service_from":  "",
+                         "service_to":  "",
+                         "line_items":  [
+                                            {
+                                                "title":  "Testartikel",
+                                                "description":  "Dies ist ein Testartikel",
+                                                "quantity":  1,
+                                                "unit":  "Stück",
+                                                "unit_price":  95,
+                                                "vat_rate":  0,
+                                                "line_total":  95
+                                            },
+                                            {
+                                                "title":  "Zweitartikel",
+                                                "description":  "Dies ist ein Zweitartikel",
+                                                "quantity":  1,
+                                                "unit":  "Stück",
+                                                "unit_price":  75,
+                                                "vat_rate":  0,
+                                                "line_total":  75
+                                            }
+                                        ],
+                         "totals":  {
+                                        "subtotal":  170,
+                                        "discount_percent":  0,
+                                        "discount_amount":  0,
+                                        "grand_total":  170
+                                    },
+                         "status":  "cancelled",
+                         "finalized_at":  "2026-07-02T12:23:46.055Z",
+                         "cancelled_at":  "2026-07-02T12:26:58.232Z",
+                         "cancel_reason":  ""
+                     },
+                     {
+                         "id":  "inv-1782995065752",
+                         "invoice_number":  "R-0002",
+                         "date":  "2026-07-02",
+                         "subject":  "Dienstleistung",
+                         "customer_number":  "",
+                         "customer_name":  "Max Mustermann",
+                         "service_from":  "",
+                         "service_to":  "",
+                         "line_items":  [
+                                            {
+                                                "title":  "Testartikel",
+                                                "description":  "Dies ist ein Testartikel",
+                                                "quantity":  1,
+                                                "unit":  "Stück",
+                                                "unit_price":  95,
+                                                "vat_rate":  0,
+                                                "line_total":  95
+                                            },
+                                            {
+                                                "title":  "Zweitartikel",
+                                                "description":  "Dies ist ein Zweitartikel",
+                                                "quantity":  1,
+                                                "unit":  "Stück",
+                                                "unit_price":  75,
+                                                "vat_rate":  0,
+                                                "line_total":  75
+                                            }
+                                        ],
+                         "totals":  {
+                                        "subtotal":  170,
+                                        "discount_percent":  0,
+                                        "discount_amount":  0,
+                                        "grand_total":  170
+                                    },
+                         "status":  "finalized",
+                         "finalized_at":  "2026-07-02T12:24:25.752Z"
+                     }
+                 ],
+    "next_sequence_number":  3
+}
