@@ -624,7 +624,18 @@ async function finalizeInvoice() {
       ? (recipientLines[1] || '')
       : (recipientLines[0] || '');
 
-    // Build invoice snapshot
+    // Set the real invoice number in the form BEFORE capturing the HTML snapshot
+    document.getElementById('feldRechnungsnummer').value = invoiceNumber;
+
+    // Sync continuation pages so the snapshot includes all pages
+    if (document.querySelectorAll('.invoice-page-extra').length > 0) {
+      renderPositionen();
+    }
+
+    // Capture pixel-perfect HTML snapshot — this is what gets shown in the archive view
+    const htmlSnapshot = buildExportHTML();
+
+    // Build invoice record
     const invoice = {
       id:               'inv-' + Date.now(),
       invoice_number:   invoiceNumber,
@@ -632,9 +643,27 @@ async function finalizeInvoice() {
       subject:          document.getElementById('feldBetreff').value.trim(),
       customer_number:  document.getElementById('feldKundennummer').value.trim(),
       customer_name:    customerName,
+      customer_address: document.getElementById('empfaengerBlock').textContent.trim(),
       service_from:     document.getElementById('feldLeistungszeitraumVon').value,
       service_to:       document.getElementById('feldLeistungszeitraumBis').value,
-      line_items:       positionen.map(p => ({
+      salutation_text:  document.getElementById('anredeBlock').textContent.trim(),
+      html_snapshot:    htmlSnapshot,
+      // Company snapshot at time of finalization
+      company: {
+        name:         document.getElementById('firmaName').textContent.trim(),
+        address:      document.getElementById('firmaAdresse').innerText.trim(),
+        contact:      document.getElementById('firmaKontakt').innerText.trim(),
+        footer_left:  document.getElementById('footerAbsenderAdresse').innerText.trim(),
+        footer_mid_title:   document.getElementById('footerKontaktTitel').textContent.trim(),
+        footer_mid:   document.getElementById('footerKontaktInhalt').innerText.trim(),
+        footer_right_title: document.getElementById('footerBankTitel').textContent.trim(),
+        footer_right: document.getElementById('footerBankInhalt').innerText.trim(),
+        vat_note:     document.getElementById('hinweisUst').textContent.trim(),
+        payment_note: document.getElementById('hinweisZahlung').textContent.trim(),
+        greeting:     document.getElementById('grussText').textContent.trim(),
+        greeting_name:document.getElementById('grussName').textContent.trim(),
+      },
+      line_items: positionen.map(p => ({
         title:        p.title,
         description:  p.description,
         quantity:     p.menge,
@@ -659,17 +688,9 @@ async function finalizeInvoice() {
     store.next_sequence_number = seqNum + 1;
     await fileStore.schreibeJSON('invoices.json', store);
 
-    // Update UI
+    // Update UI state
     invoiceFinalized = true;
     currentFinalizedInvoice = invoice;
-
-    // Set the real invoice number in the form field
-    document.getElementById('feldRechnungsnummer').value = invoiceNumber;
-
-    // Sync to continuation pages if they exist
-    if (document.querySelectorAll('.invoice-page-extra').length > 0) {
-      renderPositionen();
-    }
 
     updateExportButtonState();
     showToast(`Rechnung ${invoiceNumber} wurde erstellt.`);

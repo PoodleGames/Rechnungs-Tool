@@ -85,7 +85,20 @@ Click **"Rechnungen"** to open the invoice history.
 
 - All finalized invoices are listed with number, date, customer, total, and status
 - Toggle **"Stornierte anzeigen"** to show or hide cancelled invoices
+- Click **"Öffnen"** to view any past invoice — it opens pixel-perfectly as it was at the time of finalization
 - To cancel an invoice, click **"Stornieren"** — it stays in the list marked as cancelled, and the number is never reused (correct bookkeeping practice)
+
+## Re-exporting past invoices
+
+Every finalized invoice is stored as a complete snapshot in `data/invoices.json`, including a pixel-perfect HTML copy of the invoice as it looked at the time of finalization — layout, fonts, company details, everything.
+
+To re-export a past invoice:
+
+1. Open **"Rechnungen"** → click **"Öffnen"** next to the invoice
+2. The invoice opens exactly as it was originally created — nothing is editable
+3. Use **"Als PDF exportieren"** or **"Als XML exportieren"** to download it again
+
+This means even if you lose a PDF you sent to a customer, you can always reproduce it with the exact same content and layout, without creating a new invoice number.
 
 ---
 

@@ -96,8 +96,9 @@ function renderInvoiceTable() {
       : '<span class="status-badge active">Aktiv</span>';
 
     const actions = isCancelled
-      ? '<span class="muted" style="font-size:7.8pt;">—</span>'
-      : `<button class="btn btn-danger btn-sm" onclick="openCancelModal('${escapeHtml(inv.id)}')">Stornieren</button>`;
+      ? `<a class="btn btn-secondary btn-sm" href="Rechnung-Ansicht.html?id=${escapeHtml(inv.id)}" target="_blank">Öffnen</a>`
+      : `<a class="btn btn-secondary btn-sm" href="Rechnung-Ansicht.html?id=${escapeHtml(inv.id)}" target="_blank">Öffnen</a>
+         <button class="btn btn-danger btn-sm" onclick="openCancelModal('${escapeHtml(inv.id)}')">Stornieren</button>`;
 
     return `<tr class="${isCancelled ? 'row-cancelled' : ''}">
       <td><strong>${escapeHtml(inv.invoice_number)}</strong></td>
