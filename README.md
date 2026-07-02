@@ -2,83 +2,137 @@
 
 ## How to start
 
-1. Double-click the file **`Rechnungstool.html`**
-   (it opens automatically in your browser, e.g. Microsoft Edge)
+1. Double-click **`start.bat`** in the project folder.
+   A small window opens briefly, then your browser launches automatically at `http://localhost:8000`.
 
-2. The first time you open it, a window will appear: *"Connect the Invoice Tool to your folder"*
-   - Click **"Choose folder"**
-   - In the dialog that opens, navigate to the folder that contains `Rechnungstool.html`, `data`, and `output` — this might **not** be the folder the dialog opens in by default, so look around if needed
-   - Select that folder
-   - Done! You only have to do this **once** — the browser remembers your choice afterwards.
+2. Done. No installation, no downloads, nothing else needed.
 
-3. From now on you can create invoices normally.
+> **Note:** Keep the black command window open while you work — it runs the local server.
+> Closing it shuts down the tool.
 
-That's it. No installation, nothing to download, nothing else needed.
+---
 
-## What the four pages do
+## First-time setup
+
+Before creating your first invoice, fill in your company details once:
+
+1. Click **"Firma"** in the bottom-right button bar
+2. Enter your name, address, bank details, tax number, etc.
+3. Click **"Alles speichern"**
+
+These details appear automatically on every invoice from that point on.
+
+---
+
+## What the pages do
 
 | Page | Purpose |
 |---|---|
-| `Rechnungstool.html` | Create and edit an invoice |
+| `Rechnungstool.html` | Create and finalize invoices |
+| `Rechnungen.html` | Invoice history — view, filter, cancel |
 | `Kunden.html` | Add, edit, delete customers |
-| `Artikel.html` | Add services/items you can insert into invoices |
-| `Firma.html` | Your company details (name, address, bank details, invoice number format) — set this up once, it's then used automatically on every invoice |
+| `Artikel.html` | Manage your service/item catalog |
+| `Firma.html` | Company details, bank info, invoice number format |
 
-You can switch between the pages anytime using the buttons in the top-right corner.
+---
 
-## Typing an item title shows suggestions
+## The invoice workflow
 
-When you start typing into the "Beschreibung" (description/title) field of a line item, a small dropdown automatically shows matching items from your catalog (the ones you saved in `Artikel.html`). Click a suggestion to fill in the title, description, and price all at once.
+### 1. Fill in the invoice
+- Select a customer from the address book (top-left dropdown) or type the address manually
+- Add line items from your catalog or as empty positions
+- Adjust quantities, prices, discount as needed
+- Set the date and service period
 
-## How to save an invoice
+### 2. Finalize
+Click the green **"Rechnung erstellen"** button.
 
-There are three buttons in the bottom-right corner:
+This will:
+- Assign the next sequential invoice number (e.g. `R-0001`)
+- Save a complete snapshot to `data/invoices.json`
+- Unlock the PDF and XML export buttons
 
-**HTML speichern** (Save HTML)
-Downloads the invoice as a file into your normal downloads folder.
+> You cannot export before finalizing. This ensures every exported invoice has a real number and is recorded in the history.
 
-**Im Kundenordner ablegen** (File in customer folder)
-This is the important button for real, sequentially numbered invoices. It automatically assigns the next invoice number (`R-0001`, `R-0002`, `R-0003`, ...) and saves the invoice directly into the right customer folder under `output/`. Every customer automatically gets their own folder.
+### 3. Export
+After finalizing, two export options are available:
 
-**Als PDF exportieren** (Export as PDF)
-Opens your browser's normal print dialog, where you can choose "Save as PDF".
+**Als PDF exportieren** — opens your browser's print dialog. Choose "Save as PDF" and pick a location.
+
+**Als XML exportieren** — downloads a valid **XRechnung 2.3** file (UN/CEFACT CII format), ready for import into accounting software (DATEV, Lexware, Sage, etc.) or submission to customers who require electronic invoices.
+
+### 4. File in customer folder (optional)
+**"Im Kundenordner ablegen"** saves a copy of the invoice as an HTML file into `output/`, automatically sorted into a subfolder by customer number and name.
+
+---
+
+## Multi-page invoices
+
+When you add more line items than fit on one page, the tool automatically creates additional pages.
+
+- Set **"Max. pro Seite"** (bottom of the items table) to control how many positions fit per page
+- All pages share the same header, address, and footer — edit on page 1, all pages update instantly
+- Line items are editable on every page
+- Totals always appear on the last page only
+- The "Add item" bar always appears on the last page only
+- Page numbers are shown when there is more than one page
+
+---
+
+## Invoice history
+
+Click **"Rechnungen"** to open the invoice history.
+
+- All finalized invoices are listed with number, date, customer, total, and status
+- Toggle **"Stornierte anzeigen"** to show or hide cancelled invoices
+- To cancel an invoice, click **"Stornieren"** — it stays in the list marked as cancelled, and the number is never reused (correct bookkeeping practice)
+
+---
+
+## Autocomplete for line items
+
+When typing in the title field of a line item, a dropdown appears with matching items from your catalog (`Artikel.html`). Click a suggestion to fill in title, description, unit price, and unit in one step.
+
+---
 
 ## Where your data lives
 
-Everything stays on your own computer, inside this folder:
+Everything stays on your own computer, in the project folder:
 
 ```
 data/
-  kunden.json          → all your customers
-  artikel.json         → all your services/items
-  einstellungen.json   → your company details, invoice number counter
+  kunden.json          → customers
+  artikel.json         → service/item catalog
+  einstellungen.json   → company details, invoice number counter
+  invoices.json        → complete history of all finalized invoices
 
 output/
   K-00001_Customer_Name/
-    Rechnung_R-0001_2026-06-30.html
-    Rechnung_R-0005_2026-07-12.html
+    Rechnung_R-0001_2026-07-01.html
   K-00002_Another_Customer/
-    Rechnung_R-0002_2026-06-30.html
+    Rechnung_R-0002_2026-07-02.html
 ```
 
-**Tip:** back up this whole folder every now and then (e.g. copy it to a USB stick) so nothing gets lost.
+**Tip:** back up this whole folder regularly (e.g. copy to a USB stick or cloud folder).
+
+---
 
 ## Frequently asked questions
 
-**A security prompt from the browser appeared — is that normal?**
-Yes. The browser is asking, once, whether this page is allowed to access your files. That's expected and necessary — it's the only way the tool can save your invoices directly to your computer. Just click "Allow" / select the folder.
+**The browser didn't open automatically after double-clicking start.bat.**
+Open your browser manually and go to `http://localhost:8000`. If that doesn't work either, check that the black command window is still open and shows no error message.
 
 **I'm using Firefox and it doesn't work.**
-Please use Microsoft Edge or Google Chrome instead. Edge comes pre-installed on every Windows computer (the blue "e" icon). Firefox doesn't currently support the required technology.
+Please use Microsoft Edge or Google Chrome. Edge comes pre-installed on every Windows computer (blue "e" icon).
 
-**Do I have to choose the folder again every time?**
-No, only the very first time. After that, the browser remembers your choice automatically.
+**Can I create a new invoice after finalizing one?**
+Yes — simply refresh the page (`F5`) or close and reopen the tab. The form resets to a new draft. The finalized invoice remains safely in `data/invoices.json`.
 
-**Can I move or rename the folder?**
-Yes. You'll just need to select the folder once more afterwards (the connection window will simply appear again, once).
-
-**My company details / customers aren't showing up on the invoice.**
-This usually means the tool got connected to the wrong folder the first time (e.g. a "Documents" folder instead of the actual program folder), so it created an empty `data/` folder there instead of using the real one. Check whether there's a stray `data` folder somewhere outside this project folder; if so, delete it, then reconnect and make sure to actively navigate to *this* folder in the picker dialog.
+**The PDF/XML buttons are greyed out.**
+Click **"Rechnung erstellen"** first to finalize the invoice. The export buttons unlock automatically afterwards.
 
 **Is my data sent anywhere over the internet?**
-No. Everything happens locally on your computer. Nothing is uploaded anywhere.
+No. The tool runs entirely on your computer via a local server (`localhost`). Nothing leaves your machine.
+
+**What is the XRechnung format?**
+XRechnung is the official German electronic invoice standard (EN 16931), required for invoices to public authorities since 2020 and increasingly expected in B2B transactions. The exported file can be validated at [https://www.portals.de/xrechnung/pruefen](https://www.portals.de/xrechnung/pruefen).
